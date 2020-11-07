@@ -75,39 +75,62 @@ class AI(BaseAI):
             if not miner or not miner.tile:
                 continue
 
+            self.went_back = False
             # Move to tile next to base
             if miner.tile.is_base:
                 if miner.tile.tile_east:
-                    miner.move(miner.tile.tile_east)
+                    self.goto = 'tile_east'
+                    self.goback = 'tile_west'
+                    print("move east")
+                    # miner.move(miner.tile.tile_east)
                 else:
-                    miner.move(miner.tile.tile_west)
+                    print("move west")
+                    self.attr = 'tile_west'
+                    self.goback = 'tile_east'
+                    # miner.move(miner.tile.tile_west)
             
-            # Sell all materials
-            sellTile = self.game.get_tile_at(self.player.base_tile.x, miner.tile.y)
-            if sellTile and sellTile.owner == self.player:
-                miner.dump(sellTile, "dirt", -1)
-                miner.dump(sellTile, "ore", -1)
-
-            eastTile = miner.tile.tile_east
-            westTile = miner.tile.tile_west
-
-            # Mine east and west tiles, hopper side first
-            if eastTile.x == self.player.base_tile.x:
-                if eastTile:
-                    miner.mine(eastTile, -1)
-                if westTile:
-                    miner.mine(westTile, -1)
+            if miner.tile.y == 0:
+                miner.mine(miner.tile.tile_south, -1)
             else:
-                if westTile:
-                    miner.mine(westTile, -1)
-                if eastTile:
-                    miner.mine(eastTile, -1)
+                if not self.went_back:
+                    if (miner.dirt + miner.ore) >= miner.current_upgrade.cargo_capacity:
+                        while miner.moves and not self.went_back:
+                            miner.move(getattr(miner.tile, self.goback))
+                    else:
+                        miner.mine(getattr(miner.tile, self.goto), -1)
+                        miner.move(getattr(miner.tile, self.goto))
+                else:
+                    pass
 
-            # Check to make sure east and west tiles are mined
-            if (eastTile and eastTile.ore + eastTile.dirt == 0) and (westTile and westTile.ore + westTile.dirt == 0):
-                # Dig down
-                if miner.tile.tile_south:
-                    miner.mine(miner.tile.tile_south, -1)
+                
+            print(miner.tile.x, miner.tile.y)
+
+            # # Sell all materials
+            # sellTile = self.game.get_tile_at(self.player.base_tile.x, miner.tile.y)
+            # if sellTile and sellTile.owner == self.player:
+            #     miner.dump(sellTile, "dirt", -1)
+            #     miner.dump(sellTile, "ore", -1)
+
+            # eastTile = miner.tile.tile_east
+            # westTile = miner.tile.tile_west
+
+            # # Mine east and west tiles, hopper side first
+            # if eastTile.x == self.player.base_tile.x:
+            #     if eastTile:
+            #         miner.mine(eastTile, -1)
+            #     if westTile:
+            #         miner.mine(westTile, -1)
+            # else:
+            #     if westTile:
+            #         miner.mine(westTile, -1)
+            #     if eastTile:
+            #         miner.mine(eastTile, -1)
+
+            # # Check to make sure east and west tiles are mined
+            # if (eastTile and eastTile.ore + eastTile.dirt == 0) and (westTile and westTile.ore + westTile.dirt == 0):
+            #     # Dig down
+            #     if miner.tile.tile_south:
+            #         miner.mine(miner.tile.tile_south, -1)
             
         return True
         # <<-- /Creer-Merge: runTurn -->>
