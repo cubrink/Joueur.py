@@ -247,31 +247,45 @@ class AI(BaseAI):
 
 
     def shaft_mining(self, miner):
-        print(self.away, self.back)
-        print("base x", self.player.base_tile.x)
+        print("Start shaft mining")
+        print("base x:", self.player.base_tile.x)
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
 
         if (miner.tile.is_hopper):
-            print("at hopper")
+            print("at hopper 1")
             miner.dump(miner.tile, 'ore', -1)
             miner.dump(miner.tile, 'dirt',-1)
             miner.buy('buildingMaterials', 10)
             miner.build(tile_away(), 'ladder')
         elif (tile_back() is not None and tile_back().is_hopper()):
-            print("at hopper")
+            print("at hopper 2")
             miner.dump(tile_back(), 'ore', -1)
             miner.dump(tile_back(), 'dirt',-1)
             miner.buy('buildingMaterials', 10)
             miner.build(miner.tile, 'ladder')
 
+        while miner.mining_power > 0:
+            # If miner.tile.x != self.player.base_tile.x:
+            #       mine back
+            if (tile_away().dirt + tile_away().ore > 0):
+
+
 
         print(f'type of tile_away = {type(tile_away())}')
-        
-        miner.move(tile_away())
+
         miner.mine(miner.tile.tile_south, -1)
-        miner.mine(tile_back(), -1)
-        miner.move(tile_back())
+        miner.move(miner.tile.tile_south)
+        miner.mine(tile_away(), -1)
+
+        # print("1")
+        # miner.move(tile_away())
+        # print("2")
+        # miner.mine(miner.tile.tile_south, -1)
+        # print("3")
+        # miner.mine(tile_back(), -1)
+        # print("4")
+        # miner.move(tile_back())
 
         return
 
