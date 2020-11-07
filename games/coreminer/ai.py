@@ -85,7 +85,7 @@ class AI(BaseAI):
                     # miner.move(miner.tile.tile_east)
                 else:
                     print("move west")
-                    self.attr = 'tile_west'
+                    self.goto = 'tile_west'
                     self.goback = 'tile_east'
                     # miner.move(miner.tile.tile_west)
             
@@ -200,7 +200,7 @@ class AI(BaseAI):
     # <<-- /Creer-Merge: functions -->>
 
 
-    def support_needed(miner_mining, tile_to_remove):
+    def support_needed(self, miner_mining, tile_to_remove):
         # check to see if a support block needs to be placed before you mine the block
         # this check shouldn't matter if the entire block will not be mined. 
 
@@ -214,24 +214,24 @@ class AI(BaseAI):
 
         # check to see if the block in the opposite direction has been mined
         if direction == 1:                  # right
-            temp_tile = game.get_tile_at(miner_coordinates[0]-1, miner_coordinates[1])
-        else if direction == -1:            # left
-            temp_tile = game.get_tile_at(miner_coordinates[0]+1, miner_coordinates[1])
+            temp_tile = self.game.get_tile_at(miner_coordinates[0]-1, miner_coordinates[1])
+        elif direction == -1:            # left
+            temp_tile = self.game.get_tile_at(miner_coordinates[0]+1, miner_coordinates[1])
         else:
             temp_tile = None
         
         if temp_tile:
             if temp_tile.dirt or temp_tile.ore:
-                return false
+                return False
         
         # check to see if 3 blockes above block will be unsupported
 
         tile_check_list = [
-            game.get_tile_at(miner_coordinates[0]-1, miner_coordinates[1]+1),
-            game.get_tile_at(miner_coordinates[0], miner_coordinates[1]+1),
-            game.get_tile_at(miner_coordinates[0]+1, miner_coordinates[1]+1)
+            self.game.get_tile_at(miner_coordinates[0]-1, miner_coordinates[1]+1),
+            self.game.get_tile_at(miner_coordinates[0], miner_coordinates[1]+1),
+            self.game.get_tile_at(miner_coordinates[0]+1, miner_coordinates[1]+1)
             ]
-        return all([temp_tile.dirt or temp_tile.ore for temp_tile in tile_check_list]):
+        return all([temp_tile.dirt or temp_tile.ore for temp_tile in tile_check_list])
 
 
 
