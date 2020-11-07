@@ -44,7 +44,7 @@ class AI(BaseAI):
             'Military',
             'None'
         ]
-        self.job_map = {miner: 'None' for miner in self.miners}
+        self.job_map = {miner: 'None' for miner in self.player.miners}
 
         self.standby = lambda: True
 
