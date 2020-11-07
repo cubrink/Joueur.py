@@ -110,11 +110,11 @@ class AI(BaseAI):
             if not miner or not miner.tile:
                 continue
             self.shaft_mining(miner)
-            print("I'm here: ",self.game.current_turn)
+            print("Turn: ",self.game.current_turn)
 
 
-            print(miner.tile.x, miner.tile.y)
-            print(miner.dirt, miner.ore)
+            print("(x, y) = ", miner.tile.x, miner.tile.y)
+            print("(dirt, ore) = ", miner.dirt, miner.ore)
 
             # # Sell all materials
             # sellTile = self.game.get_tile_at(self.player.base_tile.x, miner.tile.y)
@@ -254,23 +254,25 @@ class AI(BaseAI):
         tile_back = getattr(miner.tile, self.back)
 
         if (miner.tile.is_hopper):
+            print("at hopper")
             miner.dump(miner.tile, 'ore', -1)
             miner.dump(miner.tile, 'dirt',-1)
-            miner.buy('buildingMaterials', 5)
+            miner.buy('buildingMaterials', 10)
+            miner.build(tile_away(), 'ladder')
+        elif (tile_back() is not None and tile_back().is_hopper()):
+            print("at hopper")
+            miner.dump(tile_back(), 'ore', -1)
+            miner.dump(tile_back(), 'dirt',-1)
+            miner.buy('buildingMaterials', 10)
+            miner.build(miner.tile, 'ladder')
 
-        print(f'type of tile_away = {type(tile_away)}')
 
-        if getattr(miner.tile, self.away).dirt != 0:
-            miner.mine(getattr(miner.tile, self.away), -1)
-            miner.build(getattr(miner.tile, self.away), 'ladder')
-
+        print(f'type of tile_away = {type(tile_away())}')
+        
+        miner.move(tile_away())
         miner.mine(miner.tile.tile_south, -1)
-        miner.mine(getattr(miner.tile, self.away), -1)
-        miner.build(getattr(miner.tile, self.away), 'ladder')
-
-
-        if tile_back:
-            miner.move(getattr(miner.tile, self.back))
+        miner.mine(tile_back(), -1)
+        miner.move(tile_back())
 
         return
 
