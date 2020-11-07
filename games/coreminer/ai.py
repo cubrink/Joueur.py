@@ -29,12 +29,47 @@ class AI(BaseAI):
             str: The name of your Player.
         """
         # <<-- Creer-Merge: get-name -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
-        return "Coreminer Python Player" # REPLACE THIS WITH YOUR TEAM NAME
+        return "Quuz" # REPLACE THIS WITH YOUR TEAM NAME
         # <<-- /Creer-Merge: get-name -->>
 
     def start(self) -> None:
         """This is called once the game starts and your AI knows its player and game. You can initialize your AI here.
         """
+
+
+        self.jobs = [
+            'Ore_miner',
+            'Mass_miner',
+            'Shaft_miner',
+            'Military',
+            'None'
+        ]
+        self.job_map = {miner: 'None' for miner in self.miners}
+
+        self.standby = lambda: True
+
+        self.state_map = {
+            'Ore_miner': {
+                            'return_cargo': self.standby, 
+                            'return_to_mining': self.standby, 
+                            'mining': self.standby
+                          },
+            'Mass_miner': {
+                            'return_cargo': self.standby, 
+                            'return_to_mining': self.standby, 
+                            'mining': self.standby
+                          },
+            'Shaft_miner':{
+                            'return_cargo': self.standby, 
+                            'return_to_mining': self.standby, 
+                            'mining': self.standby
+                          },
+            'Military': {'Standby': self.standby},
+            'None': {'Standby': self.standby}
+        }
+
+
+
         # <<-- Creer-Merge: start -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         # replace with your start logic
         
@@ -70,40 +105,47 @@ class AI(BaseAI):
         if len(self.player.miners) < 1 and self.player.money >= self.game.spawn_price:
             self.player.spawn_miner()
 
-        # For each miner
         for miner in self.player.miners:
-            if not miner or not miner.tile:
-                continue
+            miner.mine(miner.tile.tile_south, -1)
+            miner.mine(miner.tile.tile_east, -1)
+            miner.move(miner.tile.tile_east)
 
-            self.went_back = False
-            # Move to tile next to base
-            if miner.tile.is_base:
-                if miner.tile.tile_east:
-                    self.goto = 'tile_east'
-                    self.goback = 'tile_west'
-                    print("move east")
-                    # miner.move(miner.tile.tile_east)
-                else:
-                    print("move west")
-                    self.attr = 'tile_west'
-                    self.goback = 'tile_east'
-                    # miner.move(miner.tile.tile_west)
+        # # For each miner
+        # for miner in self.player.miners:
+        #     if not miner or not miner.tile:
+        #         continue
+
+        #     self.went_back = False
+        #     # Move to tile next to base
+        #     if miner.tile.is_base:
+        #         if miner.tile.tile_east:
+        #             self.goto = 'tile_east'
+        #             self.goback = 'tile_west'
+        #             print("move east")
+        #             # miner.move(miner.tile.tile_east)
+        #         else:
+        #             print("move west")
+        #             self.attr = 'tile_west'
+        #             self.goback = 'tile_east'
+        #             # miner.move(miner.tile.tile_west)
             
-            if miner.tile.y == 0:
-                miner.mine(miner.tile.tile_south, -1)
-            else:
-                if not self.went_back:
-                    if (miner.dirt + miner.ore) >= miner.current_upgrade.cargo_capacity:
-                        while miner.moves and not self.went_back:
-                            miner.move(getattr(miner.tile, self.goback))
-                    else:
-                        miner.mine(getattr(miner.tile, self.goto), -1)
-                        miner.move(getattr(miner.tile, self.goto))
-                else:
-                    pass
+        #     if miner.tile.y == 0:
+        #         miner.mine(miner.tile.tile_south, -1)
+        #     else:
+        #         if not self.went_back:
+        #             if (miner.dirt + miner.ore) >= miner.current_upgrade.cargo_capacity:
+        #                 while miner.moves and not self.went_back:
+        #                     miner.move(getattr(miner.tile, self.goback))
+        #             else:
+        #                 miner.mine(getattr(miner.tile, self.goto), -1)
+        #                 miner.move(getattr(miner.tile, self.goto))
+        #         else:
+        #             pass
 
-                
+
+
             print(miner.tile.x, miner.tile.y)
+            print(miner.dirt, miner.ore)
 
             # # Sell all materials
             # sellTile = self.game.get_tile_at(self.player.base_tile.x, miner.tile.y)
@@ -232,7 +274,6 @@ class AI(BaseAI):
             game.get_tile_at(miner_coordinates[0]+1, miner_coordinates[1]+1)
             ]
         return all([temp_tile.dirt or temp_tile.ore for temp_tile in tile_check_list]):
-
 
 
 
