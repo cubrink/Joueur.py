@@ -35,7 +35,8 @@ class AI(BaseAI):
     def start(self) -> None:
         """This is called once the game starts and your AI knows its player and game. You can initialize your AI here.
         """
-
+        self.away = "tile_east" if self.player.base_tile.x == 0 else "tile_west"
+        self.back = "tile_east" if self.player.base_tile.x != 0 else "tile_west"
 
         self.jobs = [
             'Ore_miner',
@@ -44,7 +45,7 @@ class AI(BaseAI):
             'Military',
             'None'
         ]
-        self.job_map = {miner: 'None' for miner in self.miners}
+        self.job_map = {miner: 'None' for miner in self.player.miners}
 
         self.standby = lambda: True
 
@@ -108,34 +109,8 @@ class AI(BaseAI):
         for miner in self.player.miners:
             if not miner or not miner.tile:
                 continue
-
-            self.went_back = False
-            # Move to tile next to base
-            if miner.tile.is_base:
-                if miner.tile.tile_east:
-                    self.goto = 'tile_east'
-                    self.goback = 'tile_west'
-                    print("move east")
-                    # miner.move(miner.tile.tile_east)
-                else:
-                    print("move west")
-                    self.goto = 'tile_west'
-                    self.goback = 'tile_east'
-                    # miner.move(miner.tile.tile_west)
-            
-        #     if miner.tile.y == 0:
-        #         miner.mine(miner.tile.tile_south, -1)
-        #     else:
-        #         if not self.went_back:
-        #             if (miner.dirt + miner.ore) >= miner.current_upgrade.cargo_capacity:
-        #                 while miner.moves and not self.went_back:
-        #                     miner.move(getattr(miner.tile, self.goback))
-        #             else:
-        #                 miner.mine(getattr(miner.tile, self.goto), -1)
-        #                 miner.move(getattr(miner.tile, self.goto))
-        #         else:
-        #             pass
-
+            self.shaft_mining(miner)
+            print("I'm here: ",self.game.current_turn)
 
 
             print(miner.tile.x, miner.tile.y)
@@ -271,4 +246,24 @@ class AI(BaseAI):
 
 
 
+    def shaft_mining(self, miner):
+        print(self.away, self.back)
+        print("base x", self.player.base_tile.x)
+        tile_away = getattr(miner.tile, self.away)
+        tile_back = getattr(miner.tile, self.back)
+
+
+        if (miner.tile.is_hopper):
+            miner.dump(miner.tile, 'ore', -1)
+            miner.dump(miner.tile, 'dirt',-1)
+            miner.buy('buildingMaterials', 5)
+        miner.build(getattr(miner.tile, self.away), 'ladder')
+
+        print(f'type of tile_away = {type(tile_away)}')
+        miner.mine(miner.tile.tile_south, -1)
+        miner.mine(getattr(miner.tile, self.away), -1)
+        if tile_back:
+            miner.move(getattr(miner.tile, self.back))
+
+        return
 
