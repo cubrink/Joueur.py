@@ -249,19 +249,26 @@ class AI(BaseAI):
     def shaft_mining(self, miner):
         print(self.away, self.back)
         print("base x", self.player.base_tile.x)
+
         tile_away = getattr(miner.tile, self.away)
         tile_back = getattr(miner.tile, self.back)
-
 
         if (miner.tile.is_hopper):
             miner.dump(miner.tile, 'ore', -1)
             miner.dump(miner.tile, 'dirt',-1)
             miner.buy('buildingMaterials', 5)
-        miner.build(getattr(miner.tile, self.away), 'ladder')
 
         print(f'type of tile_away = {type(tile_away)}')
+
+        if getattr(miner.tile, self.away).dirt != 0:
+            miner.mine(getattr(miner.tile, self.away), -1)
+            miner.build(getattr(miner.tile, self.away), 'ladder')
+
         miner.mine(miner.tile.tile_south, -1)
         miner.mine(getattr(miner.tile, self.away), -1)
+        miner.build(getattr(miner.tile, self.away), 'ladder')
+
+
         if tile_back:
             miner.move(getattr(miner.tile, self.back))
 
