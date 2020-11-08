@@ -261,70 +261,60 @@ class AI(BaseAI):
             #       else 
             #           mine down
             #       
+            if miner.tile.x == self.player.base_tile.x:
+                # Try mining away
+                if material_left(tile_away()) > 0:
+                    miner.mine(tile_away(), -1)
+                    if (tile_away().dirt + tile_away().ore > 0):
+                        # out of mining power
+                        return False
+                else:
+                    miner.move(tile_away())
             if miner.tile.x != self.player.base_tile.x:
-                # If not alligned, mine back
+                # Consider state change
+                if miner.tile.y >= self.job_map[id(miner)][-1]['job_row']:
+                    print("I'm here!!!!")
+                    if material_left(tile_back()) > 0:
+                        miner.mine(tile_back(), -1)
+                        if material_left(tile_back()) > 0:
+                            return False
+                    self.update_job_map(miner, 'Ore_miner', 'mining')
+                    print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
+                    return True
+
+                # If not alligned, mine
                 miner.mine(tile_back(), -1)
                 if (tile_back().dirt + tile_back().ore > 0):
                     # out of mining power
                     return False
                 # Dump ore if possilbe
                 if tile_back().is_hopper:
-                    miner.dump(miner.tile, 'ore', -1)
-                    miner.dump(miner.tile, 'dirt',-1)
+                    miner.dump(tile_back(), 'ore', -1)
+                    miner.dump(tile_back(), 'dirt',-1)
                 # Build ladder if possible
                 if not miner.tile.is_ladder:
-                    miner.buy('buildingMaterials', 5)
+                    miner.buy('buildingMaterials', self.game.ladder_cost)
                     miner.build(miner.tile, 'ladder')
+                if miner.tile.tile_north is not None and not miner.tile.tile_north.is_ladder:
+                    miner.buy('buildingMaterials', self.game.ladder_cost)
+                    miner.build(miner.tile.tile_north, 'ladder')
 
                 # Nothing to mine laterally, mine down, if possible
                 if miner.tile.tile_south is not None:
                     miner.mine(miner.tile.tile_south, -1)
                     if material_left(miner.tile.tile_south) > 0:
-                        return
+                        return False
                     miner.move(miner.tile.tile_south)
                     if material_left(tile_back()) > 0:
                         miner.mine(tile_back(), -1)
-                        if material_left(tile_back() > 0):
-                            return False
-                    if miner.tile.y >= self.job_map[id(miner)][-1]['job_row']:
                         if material_left(tile_back()) > 0:
-                            miner.mine(tile_back(), -1)
-                            if material_left(tile_back() > 0):
-                                return False
-                            else:
-                                self.update_job_map(miner, 'Ore_miner', 'mining')
-                                print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
-                                return True
-            else:
-                # Try mining away
-                if material_left(tile_away()) > 0:
-                    miner.mine(tile_away(), -1)
-                    if (tile_away().dirt + tile_away().ore > 0):
-                        # out of mining power
-                        return
-                # Add ladder, if needed
-                if miner.tile.is_hopper:
-                    miner.dump(miner.tile, 'ore', -1)
-                    miner.dump(miner.tile, 'dirt',-1)
-                if not tile_away().is_ladder:
-                    miner.buy('buildingMaterials', 5)
-                    miner.build(tile_away(), 'ladder')
+                            return False
+                    
 
-                # Nothing to mine laterally, mine down, if possible
-                # if miner.tile.tile_south is not None:
-                #     miner.mine(miner.tile.tile_south, -1)
-                #     if material_left(miner.tile.tile_south) > 0:
-                #         return
-                #     miner.move(miner.tile.tile_south)
-                #     if miner.tile.y >= self.job_map[id(miner)][-1]['job_row']:
-                #         miner.move(tile_away())
-                #         self.update_job_map(miner, 'Ore_miner', 'mining')
-                #         print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
-                #         return True
-                else:
-                    return False
+        print("job row = ", self.job_map[id(miner)][-1]['job_row'])
 
         if miner.tile.y >= self.job_map[id(miner)][-1]['job_row']:
+            print('Here!')
             miner.move(tile_away())
             self.update_job_map(miner, 'Ore_miner', 'mining')
             print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
