@@ -91,7 +91,8 @@ class AI(BaseAI):
         self.miner_row_gen = row_generator()
         self.initial_turn = True
         self.update_set = set()
-        self.CHAOS_BOUND = 12
+        self.CHAOS_BOUND = 10
+        self.is_chaos = False
 
         self.spawn_mega_miner = {2: 25, 11: 27, 19: 29, 25: 29}  # miner number: job_row
 
@@ -255,6 +256,12 @@ class AI(BaseAI):
 
     def miner_needed(self):
         miner = None
+        while self.is_chaos and self.player.money > 5000:
+            miner = self.add_miner(job='Chaos_mode', state='start_chaos', details={'job_row': 29, 'mega': True})
+            while miner.upgrade():
+                if miner.upgrade_level == self.game.max_upgrade_level:
+                    print("CHAOTIC MEGA MINER IS ALIVE!!! -> LVL ", miner.upgrade_level)
+
 
         if len(self.player.miners) in self.spawn_mega_miner:
             if self.player.money >= self.game.spawn_price + (3 * self.game.upgrade_price):
@@ -478,6 +485,7 @@ class AI(BaseAI):
         if self.get_row_depth(self.job_map[id(miner)][-1]['job_row']) >= self.CHAOS_BOUND:
             self.update_job_map(miner, 'Chaos_mode', 'start_chaos')
             print(f"Miner {id(miner)}: Entering Chaos mode...")
+            self.is_chaos = True
             return True
             
 
