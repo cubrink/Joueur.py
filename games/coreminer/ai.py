@@ -280,7 +280,10 @@ class AI(BaseAI):
             self.game.get_tile_at(miner_coordinates[0], miner_coordinates[1]+1),
             self.game.get_tile_at(miner_coordinates[0]+1, miner_coordinates[1]+1)
             ]
+        tile_check_list = [tile for tile in tile_check_list if tile is not None]
         if temp_tile:
+            if len(tile_check_list) != 3:
+                return False
             return all([temp_tile.dirt or temp_tile.ore for temp_tile in tile_check_list])
 
 
