@@ -224,17 +224,6 @@ class AI(BaseAI):
         job, state, details = self.job_map[id(miner)]
         desired_lvl = 0
 
-        jobs = []
-        for temp_miner in self.game.miners:
-            jobs.append(self.job_map[id(temp_miner)][0])
-        
-        if 'Mega_miner' not in jobs and self.job_map[id(miner)][0] == 'Shaft_miner':
-            # make the shaft_miner become a Mega_miner
-            # change the job_row to 29
-            self.job_map[id(miner)][-1]['job_row'] = 29
-        
-
-
         if job == 'Ore_miner' or job == 'Shaft_miner':
             if details['job_row'] < 18:
                 desired_lvl = 1
@@ -495,8 +484,19 @@ class AI(BaseAI):
             self.update_job_map(miner, 'Ore_miner', 'mining')
             return True
         
+        # move vertical up the ladder until the desired row is met
+        if miner.tile.y != self.job_map[id(miner)][-1]['job_row']:
+            if is_tile_empty(miner.tile.tile_north):
+                if not miner.tile.tile_north.is_ladder:
+                    if tile_back.is_hopper:
+                        miner.buy('building_materials', self.game.ladder_cost*1)
+                    miner.build(miner.tile.tile_north, 'ladder'))
+                miner.move(miner.tile.tile_north)
+                return False
+        
         if tile_away() is not None:
-            miner.move(tile_away())
+            if is_tile_empty(tile_away()):
+                miner.move(tile_away())
         # if above or below is ore and miner can place dirt
         if miner.tile.tile_north is not None:
             if miner.tile.tile_north.ore != 0:
@@ -552,7 +552,7 @@ class AI(BaseAI):
         miner.move(tile_back())
 
         # check if next tile back is the chute
-        if tile_back().is_hopper():
+        if tile_back().is_hopper:
             self.job_map[id(miner)] = ('Ore_miner', 'return_cargo')
             return True
         
