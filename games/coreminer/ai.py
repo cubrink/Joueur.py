@@ -66,10 +66,11 @@ class AI(BaseAI):
                             'return_to_mining': self.standby, 
                             'mining': self.shaft_mining
                           },
-            'Gold_digger':{
-                            'return_cargo': self.standby, 
-                            'return_to_mining': self.standby, 
-                            'mining': self.standby
+            'Mega_miner':{
+                            'return_cargo': self.return_cargo, 
+                            'return_to_mining': self.return_to_mining, 
+                            'mining': self.ore_mining,
+                            'emergency_return': self.emergency_return
                           },
             'Military': {'standby': self.standby},
             'None': {'standby': self.standby}
@@ -114,8 +115,8 @@ class AI(BaseAI):
         # Put your game logic here for runTurn
 
         if self.initial_turn:
-            for job_row in [15, 25]:
-                self.add_miner(job='Shaft_miner', state='mining', details={'job_row': job_row})
+            for job_row in [25, 15]:
+                self.add_miner(job='Shaft_miner', state='mining', details={'job_row': job_row, 'mega': False})
             self.initial_turn = False
 
         # # If we have no miners and can afford one, spawn one
@@ -128,8 +129,8 @@ class AI(BaseAI):
         #     self.update_job_map(miner, 'Shaft_miner', 'mining', details=details)
         #     print(f'New miner id = {new_miner_id}')
 
-        if len(self.player.miners) == 2 and self.player.money >= self.game.spawn_price * 2:
-            self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 10})
+        if len(self.player.miner) == 2 and self.player.money >= self.game.spawn_price * 3:
+            self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 10, 'mega': False})
 
 
         print("Current turn: ", self.game.current_turn)
@@ -223,6 +224,17 @@ class AI(BaseAI):
         job, state, details = self.job_map[id(miner)]
         desired_lvl = 0
 
+        jobs = []
+        for temp_miner in self.game.miners:
+            jobs.append(self.job_map[id(temp_miner)][0])
+        
+        if 'Mega_miner' not in jobs and self.job_map[id(miner)][0] == 'Shaft_miner':
+            # make the shaft_miner become a Mega_miner
+            # change the job_row to 29
+            self.job_map[id(miner)][-1]['job_row'] = 29
+        
+
+
         if job == 'Ore_miner' or job == 'Shaft_miner':
             if details['job_row'] < 18:
                 desired_lvl = 1
@@ -232,23 +244,40 @@ class AI(BaseAI):
             desired_lvl = 1
         elif job == 'Military':
             desired_lvl = 3
+        elif job == 'Mega_miner':
+            desired_lvl = 3
         else:
             return
 
         if desired_lvl > miner.upgrade_level:
             # check bank to consider upgrading
-            if self.player.money >= self.game.upgrade_price * 3:
+            if self.player.money >= self.game.upgrade_price * 2:
                 if miner.upgrade():
                     print('Miner Powered Up!')
     
 
 
     def miner_needed(self):
+        miner = None
+
+        if len(self.player.miners) in [2]:
+            if self.player.money >= self.game.spawn_price + (3 * self.game.upgrade_price):
+                # spawn Mega_miner and max upgrade
+                miner = self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 29, 'mega': True})
+                while miner.upgrade():
+                    if miner.upgrade_level == self.game.max_upgrade_level:
+                        print("MEGA MINER IS ALIVE!!!")
+            else:
+                return False
+            
+
         # add miner if desired
-        if self.player.money >= self.game.spawn_price * 3:
+        elif self.player.money >= self.game.spawn_price * (3 + 0.5*len(self.player.miners)):
             # get the levels with working miners
+            jobs = []
             job_levels = []
             for temp_miner in self.game.miners:
+                jobs.append(self.job_map[id(temp_miner)][0])
                 if self.job_map[id(temp_miner)][0] in ['Ore_miner', 'Shaft_miner']:
                     job_levels.append(self.job_map[id(temp_miner)][-1]['job_row'])
 
@@ -302,6 +331,10 @@ class AI(BaseAI):
                         miner.mine(tile_back(), -1)
                         if material_left(tile_back()) > 0:
                             return False
+                    if self.job_map[id(miner)][-1]['job_row'] == 29:
+                        self.update_job_map(miner, 'Mega_miner', 'mining')
+                        print(f"Miner {id(miner)} has changed state to ('Mega_miner', 'mining')")
+                        return True
                     self.update_job_map(miner, 'Ore_miner', 'mining')
                     print(f"Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
                     return True
@@ -393,6 +426,13 @@ class AI(BaseAI):
     def mine_top_2_rows(self, miner):
         # mine the top 2 rows of the map
         # position for the start of this function should be (1,2) or (28,2)
+
+        # miner starts at spawn
+        # move to row 2
+        # if shielding, become a Ore_miner 
+            # use generator to assign job row
+
+
         pass
 
 
@@ -575,6 +615,7 @@ class AI(BaseAI):
         miner = [m for m in self.player.miners if id(m) == new_miner_id][0]
         self.update_job_map(miner, job, state, details=details)
         print(f'New miner id = {new_miner_id}')
+        return miner
 
 
 
