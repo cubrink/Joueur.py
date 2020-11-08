@@ -77,6 +77,13 @@ class AI(BaseAI):
                                 'blocking': self.block_hopper,
                                 'bombing_run': self.bombing_run
                                 },
+            'Chaos_mode':{
+                            'start_chaos': self.start_chaos
+                            'return_cargo_chaos': self.return_cargo_chaos,
+                            'return_to_mining_chaos': self.return_to_mining_chaos,
+                            'mining_chaos': self.ore_mining_chaos,
+                            'return_for_upgrade_chaos': self.return_for_upgrade
+                          },
             'Military_defence': {'standby': self.standby},
             'None': {'standby': self.standby}
         }
@@ -629,6 +636,88 @@ class AI(BaseAI):
 
 
     
+
+
+    """
+
+    'Chaos_mode':{
+                            'start_chaos': self.start_chaos
+                            'return_cargo_chaos': self.return_cargo_chaos,
+                            'return_to_mining_chaos': self.return_to_mining_chaos,
+                            'mining_chaos': self.ore_mining_chaos,
+                            'return_for_upgrade_chaos': self.return_for_upgrade
+
+
+
+
+    """
+
+
+
+
+    # TODO: ladder checks
+    def start_chaos(self, miner):
+        # have the miner go from anywhere on the map and go to the lowest hopper point
+
+        tile_away = lambda: getattr(miner.tile, self.away)
+        tile_back = lambda: getattr(miner.tile, self.back)
+
+        at_bottom = False
+
+        while miner.moves:
+            if tile_back() is not None and miner.tile.tile_south is not None:
+                # should the miner move down
+                if miner.tile.is_ladder and tile_back().is_hopper and miner.tile.tile_south.is_ladder:
+                    miner.move(miner.tile.tile_south)
+                    # if at the bottom
+                    if miner.tile.y == 29:
+                        at_bottom = True
+                        break
+                # should the miner move back
+                elif is_tile_empty(tile_back()):
+                    miner.move(tile_back()) 
+                elif miner.tile.tile_south.is_ladder:
+                    
+                    # ADD LADDER CONDITION HERE
+
+                    pass
+            elif miner.tile.til_south is None:
+                at_bottom = True
+                break
+            else:
+                break
+        
+        if at_bottom:
+            # transfer to Return_cargo
+            self.update_job_map(miner, 'Chaos_mode', 'return_cargo_chaos')
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
