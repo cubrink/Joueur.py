@@ -54,6 +54,7 @@ class AI(BaseAI):
                             'return_cargo': self.return_cargo, 
                             'return_to_mining': self.return_to_mining, 
                             'mining': self.ore_mining,
+                            'return_for_upgrade': self.return_for_upgrade,
                             'emergency_return': self.emergency_return
                           },
             'Mass_miner': {
@@ -243,8 +244,10 @@ class AI(BaseAI):
         if desired_lvl > miner.upgrade_level:
             # check bank to consider upgrading
             if self.player.money >= self.game.upgrade_price * 2:
-                if miner.upgrade():
-                    print('Miner Powered Up!')
+                if miner.tile.is_hopper:
+                    if miner.upgrade():
+                        print('Miner Powered Up!')
+
     
 
 
@@ -285,6 +288,7 @@ class AI(BaseAI):
                 # we want every other row to have a ore miner starting at 5 going to 29
                 # start at 17
             except StopIteration:
+                print("ABORT! ABORT!")
                 return
 
 
@@ -322,8 +326,7 @@ class AI(BaseAI):
                 # Check if back tile is hopper
                 if tile_back().is_hopper or (tile_back().x, tile_back().y) == (self.player.base_tile.x, self.player.base_tile.y):
                     # Dump ore and buy materials
-                    miner.dump(tile_back(), 'dirt', -1)
-                    miner.dump(tile_back(), 'ore', -1)
+                    dump_all(miner, tile_back())
 
                     if miner.building_materials < self.game.ladder_cost * 6:
                         # Buy materials, if needed
@@ -364,8 +367,7 @@ class AI(BaseAI):
                 print(f"Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
                 return True
                 
-
-
+         
                 
 
 
@@ -531,7 +533,7 @@ class AI(BaseAI):
             # buy meterials until you have 3x required amount
             while miner.building_materials < ((2+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
-            self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
+            self.update_job_map(miner, 'Ore_miner', 'return_for_upgrade')
             return True
         # the tile back is the hopper
         elif tile_back().is_hopper:
@@ -540,7 +542,7 @@ class AI(BaseAI):
             # buy materials until you have 3x required amount
             while miner.building_materials < ((2+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
-            self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
+            self.update_job_map(miner, 'Ore_miner', 'return_for_upgrade')
             return True
         # move back to find hopper
         else:
@@ -573,7 +575,7 @@ class AI(BaseAI):
             if is_tile_empty(miner.tile.tile_north):
                 if not miner.tile.tile_north.is_ladder:
                     if tile_back.is_hopper:
-                        miner.buy('building_materials', self.game.ladder_cost*1)
+                        miner.buy('buildingMaterials', self.game.ladder_cost*1)
                     miner.build(miner.tile.tile_north, 'ladder')
                 miner.move(miner.tile.tile_north)
                 return False
@@ -633,6 +635,11 @@ class AI(BaseAI):
         tile_back = lambda: getattr(miner.tile, self.back)
 
         # state called when the miner gets stuck trying to return return cargo
+        if not is_tile_empty(tile_back()):
+            # get amount of material to clear
+            # dump that amout of material behind
+            # try moving forward again
+            pass
         miner.move(tile_back())
 
         # check if next tile back is the chute
@@ -642,6 +649,40 @@ class AI(BaseAI):
         
         return False
 
+
+    def return_for_upgrade(self, miner):
+        print("returning for upgrades")
+        # TODO: make sure you can walk forward - place ladder or dirt as needed
+
+        # return miner to cargo - moving back to cargo
+        tile_away = lambda: getattr(miner.tile, self.away)
+        tile_back = lambda: getattr(miner.tile, self.back)
+
+        if tile_back() is not None:
+            # check if miner is on hopper
+            if miner.tile.is_hopper:
+                if miner.upgrade():
+                    if self.job_map[id(miner)][0] == 'Ore_miner':
+                        self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
+                    return True
+            # the tile back is the hopper
+            elif tile_back().is_hopper:
+                miner.move(tile_back())
+                if miner.upgrade():
+                    if self.job_map[id(miner)][0] == 'Ore_miner':
+                        self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
+                    return True
+                return False
+            # move back to find hopper
+            else:
+                # check for missing tile beneth tile back
+                if self.walkable(tile_back()):
+                    miner.move(tile_back())
+                else:
+                    self.update_job_map(miner, self.job_map[id(miner)][0], 'emergency_return')
+                    return True
+        
+        return False
 
 
 
