@@ -404,8 +404,15 @@ class AI(BaseAI):
         while miner.moves != 0 and miner.mining_power != 0:
             # if cargo is full or not enough material for support
             if self.current_cargo(miner) == miner.current_upgrade.cargo_capacity or miner.building_materials < self.game.support_cost:
+                # check if miner is on hopper
+                if miner.tile.is_hopper:
+                    # dump all cargo
+                    dump_all(miner, miner.tile)
+                    # buy meterials until you have 2x required amount
+                    while miner.building_materials < (2*self.game.support_cost):
+                        miner.buy('buildingMaterials', self.game.support_cost)
                 # move back until miner can drop cargo
-                if tile_away().is_hopper:
+                elif tile_away().is_hopper:
                     # dump all cargo
                     dump_all(miner, tile_back())
                     # buy materials until you have 2x required amount
