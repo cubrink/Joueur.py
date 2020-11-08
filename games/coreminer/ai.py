@@ -694,11 +694,27 @@ class AI(BaseAI):
                         at_bottom = True
                         break
                 # should the miner move back
-                elif is_tile_empty(tile_back()):
+                elif is_tile_empty(tile_back()) and not tile_back().is_hopper:
                     miner.move(tile_back()) 
-                elif miner.tile.tile_south.is_ladder:
+                elif not miner.tile.tile_south.is_ladder:
                     
                     # ADD LADDER CONDITION HERE
+
+                    # the tile back is the hopper
+                    if tile_back().is_hopper:
+                        # dump all cargo
+                        dump_all(miner, tile_back())
+                        # buy materials until you have 3x required amount
+                        while miner.building_materials < ((3+miner.upgrade_level)*self.game.support_cost):
+                            miner.buy('buildingMaterials', self.game.support_cost)
+                        # build ladder and move down
+                        miner.build(miner.tile.tile_south, 'ladder')
+                        if miner.tile.tile_south.is_ladder:
+                            miner.move(miner.tile.tile_south)
+                            # if at the bottom
+                            if miner.tile.y == 29:
+                                at_bottom = True
+                                break
 
                     pass
             elif miner.tile.til_south is None:
@@ -764,7 +780,7 @@ class AI(BaseAI):
             miner.move(tile_away())
         # if miner.mining_power
         if miner.mining_power:
-            if tile_away() is not none:
+            if tile_away() is not None:
                 # miner.mine(away, -1)
                 miner.miner(tile_away())
                 # change state to return_cargo_chaos
