@@ -256,7 +256,7 @@ class AI(BaseAI):
 
     def miner_needed(self):
         miner = None
-        while self.is_chaos and self.player.money > 5000:
+        while self.is_chaos and self.player.money > 5000 and len(self.player.miners) < 50:
             miner = self.add_miner(job='Chaos_mode', state='start_chaos', details={'job_row': 29, 'mega': True})
             while miner.upgrade():
                 if miner.upgrade_level == self.game.max_upgrade_level:
@@ -697,14 +697,18 @@ class AI(BaseAI):
         while miner.moves > 0 and miner.mining_power > 0:
             if miner.tile.x in [0, 29] and miner.tile.y == 0:
                 miner.move(tile_away())
+<<<<<<< HEAD
                 miner.move(miner.tile.tile_south())
+=======
+                miner.move(miner.tile.tile_south)
+>>>>>>> 70c0e3f2e62c2f908f356ac9396ca56b58ad7e3e
             if miner.tile.is_hopper:
                 print("Condition 1")
                 miner.move(tile_away())
             if tile_back() is not None and miner.tile.tile_south is not None:
                 # should the miner move down
                 if miner.tile.is_ladder and tile_back().is_hopper and miner.tile.tile_south.is_ladder:
-                    print("Condition 2")
+                    # print("Condition 2")
                     miner.move(miner.tile.tile_south)
                     # if at the bottom
                     if miner.tile.y == 29:
@@ -808,8 +812,12 @@ class AI(BaseAI):
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
 
+        panic = 0
         # while is_empty(tile_away()) and miner.moves
         while tile_away() is not None and is_tile_empty(tile_away()) and miner.moves:
+            panic += 1
+            if panic > 4:
+                break
             # move away
             miner.move(tile_away())
         # if miner.mining_power
