@@ -444,7 +444,7 @@ class AI(BaseAI):
                 # check if support needs to be placed
                 if self.support_needed(miner, tile_away()) and miner.building_materials > self.game.support_cost:
                     miner.build(miner.tile, 'support')
-                miner.miner(tile_away(), -1)
+                miner.mine(tile_away(), -1)
                 
 
 
