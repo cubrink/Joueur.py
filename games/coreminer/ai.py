@@ -254,7 +254,7 @@ class AI(BaseAI):
         if len(self.player.miners) in [2]:
             if self.player.money >= self.game.spawn_price + (3 * self.game.upgrade_price):
                 # spawn Mega_miner and max upgrade
-                miner = self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 29, 'mega': True})
+                miner = self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 28, 'mega': True})
                 while miner.upgrade():
                     if miner.upgrade_level == self.game.max_upgrade_level:
                         print("MEGA MINER IS ALIVE!!!")
@@ -272,14 +272,20 @@ class AI(BaseAI):
                 jobs.append(self.job_map[miner_id][0])
                 if self.job_map[miner_id][0] in ['Ore_miner', 'Shaft_miner']:
                     job_levels.append(self.job_map[miner_id][-1]['job_row'])
-
-            next_row = next(self.miner_row_gen)
-            while next_row in job_levels:
+            try:
+                print("***********************************************")
+                print(job_levels)
                 next_row = next(self.miner_row_gen)
+                while next_row in job_levels:
+                    next_row = next(self.miner_row_gen)
+                    print(next_row)
+                print("***********************************************")
 
-            self.add_miner()                
-            # we want every other row to have a ore miner starting at 5 going to 29
-            # start at 17
+                self.add_miner(job='Shaft_miner', state='mining', details={'job_row': next_row, 'mega': False})                
+                # we want every other row to have a ore miner starting at 5 going to 29
+                # start at 17
+            except StopIteration:
+                return
 
 
 
@@ -295,6 +301,11 @@ class AI(BaseAI):
 
 
         while miner.mining_power > 0 and miner.moves > 0:
+            if miner.tile.y >= self.job_map[id(miner)][-1]['job_row']:
+                self.update_job_map(miner, 'Ore_miner', 'mining')
+                print(f"Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
+                return True
+
             if miner.tile.x == self.player.base_tile.x:
                 # If they are aligned, don't want this
                 if material_left(tile_away()):
@@ -309,14 +320,14 @@ class AI(BaseAI):
             if miner.tile.x != self.player.base_tile.x:
                 # If they are not aligned. We want this
                 # Check if back tile is hopper
-                if tile_back().is_hopper:
+                if tile_back().is_hopper or (tile_back().x, tile_back().y) == (self.player.base_tile.x, self.player.base_tile.y):
                     # Dump ore and buy materials
                     miner.dump(tile_back(), 'dirt', -1)
                     miner.dump(tile_back(), 'ore', -1)
 
-                    if miner.building_materials < self.game.ladder_cost * 2:
+                    if miner.building_materials < self.game.ladder_cost * 6:
                         # Buy materials, if needed
-                        materials_needed = (2*self.game.ladder_cost) - miner.building_materials
+                        materials_needed = (6*self.game.ladder_cost) - miner.building_materials
                         miner.buy('buildingMaterials', materials_needed)
                     
                 # Build ladder above, if needed
@@ -328,8 +339,8 @@ class AI(BaseAI):
 
                 # Buy more materials, if needed
                 if tile_back().is_hopper:
-                    if miner.building_materials < self.game.ladder_cost * 2:
-                        materials_needed = (2*self.game.ladder_cost) - miner.building_materials
+                    if miner.building_materials < self.game.ladder_cost * 6:
+                        materials_needed = (6*self.game.ladder_cost) - miner.building_materials
                         miner.buy('buildingMaterials', materials_needed)
 
                 # Buying/Building done, start mining
