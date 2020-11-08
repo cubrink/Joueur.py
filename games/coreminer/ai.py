@@ -128,13 +128,12 @@ class AI(BaseAI):
                 continue
             job, state, _ = self.job_map[id(miner)]
             print(id(miner), job, state)
-            action = self.state_map[job][state]
             self.consider_upgrade(miner)
+            action = self.state_map[job][state]
             while action(miner):
                 job, state, _ = self.job_map[id(miner)]
                 action = self.state_map[job][state]
-            # consider_upgrade(miner)
-            # action(miner)
+         
 
             print("(x, y) = ", miner.tile.x, miner.tile.y)
             print("(dirt, ore) = ", miner.dirt, miner.ore)
