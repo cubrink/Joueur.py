@@ -488,32 +488,35 @@ class AI(BaseAI):
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
 
-        if tile_away() is not None and not is_tile_empty(tile_away()):
-            self.update_job_map(miner, 'Ore_miner', 'mining')
-            return True
-        
         # move vertical up the ladder until the desired row is met
-        if miner.tile.y < self.job_map[id(miner)][-1]['job_row']:
+        while miner.tile.y < self.job_map[id(miner)][-1]['job_row']:
+            print("##########################################################################")
+            print("##########################################################################")
+            print()
             print('on the wrong row. supposed to be on', self.job_map[id(miner)][-1]['job_row'],
                   'but on', miner.tile.y)
-            if is_tile_empty(miner.tile.tile_north):
+            print()
+            print("##########################################################################")
+            print("##########################################################################")
+
+            if miner.tile.tile_north is not None and is_tile_empty(miner.tile.tile_north):
                 if not miner.tile.tile_north.is_ladder:
                     if tile_back() is not None and tile_back().is_hopper:
                         miner.buy('buildingMaterials', self.game.ladder_cost*1)
                     miner.build(miner.tile.tile_north, 'ladder')
-                miner.move(miner.tile.tile_north)
+                if not miner.move(miner.tile.tile_north):
+                    return False
+            else:
                 return False
+
+
+        if tile_away() is not None and not is_tile_empty(tile_away()):
+            self.update_job_map(miner, 'Ore_miner', 'mining')
+            return True
         
         if tile_away() is not None:
             if is_tile_empty(tile_away()):
                 miner.move(tile_away())
-        # if above or below is ore and miner can place dirt
-        if miner.tile.tile_north is not None:
-            if miner.tile.tile_north.ore != 0:
-                # mine ore and replace with dirt
-                miner.mine(miner.tile.tile_north, -1)
-            if is_tile_empty(miner.tile.tile_north):
-                miner.dump(miner.tile.tile_north, 'dirt', 1)
 
         return False
 
@@ -738,7 +741,7 @@ def is_tile_empty(tile_to_check):
 
 def tile_size(tile):
     # return the size of the tile
-    return tile.bombs + tile.dirt + tile.ore
+    return len(tile.bombs) + tile.dirt + tile.ore
 
 def row_generator(start=17, stride=2):
     curr = start
