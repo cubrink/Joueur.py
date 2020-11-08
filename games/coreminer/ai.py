@@ -134,7 +134,6 @@ class AI(BaseAI):
                 job, state, _ = self.job_map[id(miner)]
                 action = self.state_map[job][state]
          
-
             print("(x, y) = ", miner.tile.x, miner.tile.y)
             print("(dirt, ore) = ", miner.dirt, miner.ore)
 
@@ -213,15 +212,13 @@ class AI(BaseAI):
         job, state, details = self.job_map[id(miner)]
         desired_lvl = 0
 
-        if job == "Ore_miner":
-            if details["job_row"] < 20:
+        if job == "Ore_miner" or job == "Shaft_miner":
+            if details["job_row"] < 18:
                 desired_lvl = 1
             else:
                 desired_lvl = 2
         elif job == "Mass_miner":
             desired_lvl = 1
-        elif job == "Shaft_miner":
-            desired_lvl = 0
         elif job == "Military":
             desired_lvl = 3
         else:
