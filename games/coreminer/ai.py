@@ -117,7 +117,7 @@ class AI(BaseAI):
         # Put your game logic here for runTurn
 
         if self.initial_turn:
-            for job_row in [20, 15]:
+            for job_row in [21, 15]:
                 self.add_miner(job='Shaft_miner', state='mining', details={'job_row': job_row, 'mega': False})
             self.initial_turn = False
 
@@ -257,13 +257,13 @@ class AI(BaseAI):
     def miner_needed(self):
         miner = None
 
-        if len(self.player.miners) in [2]:
+        if len(self.player.miners) in [2, ]:
             if self.player.money >= self.game.spawn_price + (3 * self.game.upgrade_price):
                 # spawn Mega_miner and max upgrade
-                miner = self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 28, 'mega': True})
+                miner = self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 25, 'mega': True})
                 while miner.upgrade():
                     if miner.upgrade_level == self.game.max_upgrade_level:
-                        print("MEGA MINER IS ALIVE!!!")
+                        print("MEGA MINER IS ALIVE!!! -> LVL ", miner.upgrade_level)
             else:
                 return False
             
@@ -574,10 +574,10 @@ class AI(BaseAI):
             return True
         
         # move vertical up the ladder until the desired row is met
-        if miner.tile.y != self.job_map[id(miner)][-1]['job_row']:
+        if miner.tile.y < self.job_map[id(miner)][-1]['job_row']:
             if is_tile_empty(miner.tile.tile_north):
                 if not miner.tile.tile_north.is_ladder:
-                    if tile_back.is_hopper:
+                    if tile_back() is not None and tile_back().is_hopper:
                         miner.buy('buildingMaterials', self.game.ladder_cost*1)
                     miner.build(miner.tile.tile_north, 'ladder')
                 miner.move(miner.tile.tile_north)
@@ -671,7 +671,7 @@ class AI(BaseAI):
         if tile_back() is not None:
             # check if miner is on hopper
             if miner.tile.is_hopper:
-                miner.upgrade():
+                miner.upgrade()
                 self.update_set.discard(id(miner))
                 if self.job_map[id(miner)][0] == 'Ore_miner':
                     self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
@@ -680,7 +680,7 @@ class AI(BaseAI):
             # the tile back is the hopper
             elif tile_back().is_hopper:
                 miner.move(tile_back())
-                miner.upgrade():
+                miner.upgrade()
                 self.update_set.discard(id(miner))
                 if self.job_map[id(miner)][0] == 'Ore_miner':
                     self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
