@@ -734,18 +734,56 @@ class AI(BaseAI):
         return False
 
 
-    def return_to_mining_chaos(self, miner):
-        pass
+    def return_to_mining_chaos(self, miner):     
+        # return miner to the front line - moving away as far as possible (suicide zone)
+        tile_away = lambda: getattr(miner.tile, self.away)
+        tile_back = lambda: getattr(miner.tile, self.back)
+
+        if tile_away() is not None and not is_tile_empty(tile_away()):
+            self.update_job_map(miner, 'Chaos_mode', 'mining_chaos')
+            return True
+        
+        if tile_away() is not None:
+            if is_tile_empty(tile_away()):
+                miner.move(tile_away())
+
+        return False
 
 
     def mining_chaos(self, miner):
+        tile_away = lambda: getattr(miner.tile, self.away)
+        tile_back = lambda: getattr(miner.tile, self.back)
+
+        # while is_empty(tile_away()) and miner.moves
+        while tile_away() is not None and is_tile_empty(tile_away()) and miner.moves
+            # move away
+            miner.move(tile_away())
+        # if miner.mining_power
+        if miner.mining_power:
+            if tile_away() is not none:
+                # miner.mine(away, -1)
+                miner.miner(tile_away())
+                # change state to return_cargo_chaos
+                self.update_job_map(miner, 'Chaos_mode', 'return_cargo_chaos')
+                # check if column is colapsing
+ -----          if self.is_collapsing():
+                    # if falling -> self.protect_miners()
+                    self.protect_miners()
+                return True
+        # else
+            # change state to return_cargo_chaos
+            self.update_job_map(miner, 'Chaos_mode', 'return_cargo_chaos')
+            return True
+        # 
+
+        return False
+
+
+
+
+    def protect_miners(self):
+        # call when a column is colapsing
         pass
-
-
-
-
-
-
 
 
 
