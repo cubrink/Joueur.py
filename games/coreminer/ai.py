@@ -249,42 +249,23 @@ class AI(BaseAI):
     # <<-- Creer-Merge: functions -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
     # if you need additional functions for your AI you can add them here
 
-    def support_needed(self, miner_mining, tile_to_remove):
-        # check to see if a support block needs to be placed before you mine the block
-        # this check shouldn't matter if the entire block will not be mined. 
 
-        # step 2
-        # determine which direction you are mining
-        miner_coordinates = (miner_mining.tile.x, miner_mining.tile.y)
-        # determine direction the miner is mining
-        #  1 = right
-        # -1 = left
-        direction = tile_to_remove.y - miner_coordinates[0]
 
-        # check to see if the block in the opposite direction has been mined
-        if direction == 1:                  # right
-            temp_tile = self.game.get_tile_at(miner_coordinates[0]-1, miner_coordinates[1])
-        elif direction == -1:            # left
-            temp_tile = self.game.get_tile_at(miner_coordinates[0]+1, miner_coordinates[1])
-        else:
-            temp_tile = None
+
+
+    def is_supported(self, tile):
+        if is_tile_empty(tile):
+            return True
         
-        if temp_tile:
-            if temp_tile.dirt or temp_tile.ore:
-                return False
-        
-        # check to see if 3 blockes above block will be unsupported
+        # consider y-1
+        tiles = [self.game.get_tile_at(x, tile.y+1) for x in [tile.x-1, tile.x, tile.x+1]]
+        tiles = [t for t in tiles if t is not None]
+        return any((t.is_support for t in tiles))
 
-        tile_check_list = [
-            self.game.get_tile_at(miner_coordinates[0]-1, miner_coordinates[1]+1),
-            self.game.get_tile_at(miner_coordinates[0], miner_coordinates[1]+1),
-            self.game.get_tile_at(miner_coordinates[0]+1, miner_coordinates[1]+1)
-            ]
-        tile_check_list = [tile for tile in tile_check_list if tile is not None]
-        if temp_tile:
-            if len(tile_check_list) != 3:
-                return False
-            return all([temp_tile.dirt or temp_tile.ore for temp_tile in tile_check_list])
+
+
+
+
 
 
 
@@ -415,7 +396,7 @@ class AI(BaseAI):
                     while miner.building_materials < (2*self.game.support_cost):
                         miner.buy('buildingMaterials', self.game.support_cost)
                 # move back until miner can drop cargo
-                elif tile_away().is_hopper:
+                elif tile_back().is_hopper:
                     # dump all cargo
                     dump_all(miner, tile_back())
                     # buy materials until you have 2x required amount
@@ -434,20 +415,17 @@ class AI(BaseAI):
                         # mine ore and replace with dirt
                         miner.mine(miner.tile.tile_north, -1)
                     if is_tile_empty(miner.tile.tile_north):
-                        miner.dump(miner.tile.tile_north, 1)
-                if miner.tile.tile_south is not None:
-                    if miner.tile.tile_south.ore != 0:
-                        # mine ore and replace with dirt
-                        miner.mine(miner.tile.tile_south, -1)
-                    if is_tile_empty(miner.tile.tile_south):
-                        miner.dump(miner.tile.tile_south, 1)
+                        miner.dump(miner.tile.tile_north, 'dirt', 1)
             # elif mine
             # if tile_away contains no dirt or ore
             elif not is_tile_empty(tile_away()):
-                # check if support needs to be placed
-                if self.support_needed(miner, tile_away()) and miner.building_materials > self.game.support_cost:
-                    miner.build(miner.tile, 'support')
                 miner.mine(tile_away(), -1)
+                # check if support needs to be placed
+                tile = self.game.get_tile_at(tile_away().x, tile_away().y-1)
+                if not self.is_supported(tile) and miner.building_materials > self.game.support_cost:
+                    miner.build(tile_away(), 'support')
+                    
+
                 
 
 
