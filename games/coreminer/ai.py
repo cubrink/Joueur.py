@@ -473,6 +473,14 @@ class AI(BaseAI):
         # TODO: make sure you can walk forward - place ladder or dirt as needed
         # TODO: make sure you go back to desired rung
 
+
+        if self.get_row_depth(self.job_map[id(miner)][-1]['job_row']) >= 12:
+            self.update_job_map(miner, 'Chaos_mode', 'start_chaos')
+            print(f"Miner {id(miner)}: Entering Chaos mode...")
+            return True
+            
+
+
         # return miner to mining - moving away as far as possible
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
