@@ -91,6 +91,7 @@ class AI(BaseAI):
         self.miner_row_gen = row_generator()
         self.initial_turn = True
         self.update_set = set()
+        self.CHAOS_BOUND = 12
 
         self.spawn_mega_miner = {2: 25, 11: 27, 19: 29, 25: 29}  # miner number: job_row
 
@@ -239,7 +240,7 @@ class AI(BaseAI):
         else:
             return
         
-        if len(self.player.miners) > 12:
+        if len(self.player.miners) > self.CHAOS_BOUND:
             desired_lvl = 3
 
         if desired_lvl > miner.upgrade_level:
@@ -474,7 +475,7 @@ class AI(BaseAI):
         # TODO: make sure you go back to desired rung
 
 
-        if self.get_row_depth(self.job_map[id(miner)][-1]['job_row']) >= 12:
+        if self.get_row_depth(self.job_map[id(miner)][-1]['job_row']) >= self.CHAOS_BOUND:
             self.update_job_map(miner, 'Chaos_mode', 'start_chaos')
             print(f"Miner {id(miner)}: Entering Chaos mode...")
             return True
@@ -685,12 +686,14 @@ class AI(BaseAI):
 
         at_bottom = False
         
-        while miner.moves:
+        while miner.moves > 0 and miner.mining_power > 0:
             if miner.tile.is_hopper:
+                print("Condition 1")
                 miner.move(tile_away())
             if tile_back() is not None and miner.tile.tile_south is not None:
                 # should the miner move down
                 if miner.tile.is_ladder and tile_back().is_hopper and miner.tile.tile_south.is_ladder:
+                    print("Condition 2")
                     miner.move(miner.tile.tile_south)
                     # if at the bottom
                     if miner.tile.y == 29:
@@ -698,26 +701,36 @@ class AI(BaseAI):
                         break
                 # should the miner move back
                 elif is_tile_empty(tile_back()) and not tile_back().is_hopper:
+                    print("Condition 3")
                     miner.move(tile_back()) 
                 elif not miner.tile.tile_south.is_ladder:
-                    
+                    print("Condition 4")
                     # ADD LADDER CONDITION HERE
 
                     # the tile back is the hopper
                     if tile_back().is_hopper:
+                        print("Condition 5")
                         # dump all cargo
                         dump_all(miner, tile_back())
                         # buy materials until you have 3x required amount
                         while miner.building_materials < ((3+miner.upgrade_level)*self.game.support_cost):
+                            print("Buying")
                             miner.buy('buildingMaterials', self.game.support_cost)
                         # build ladder and move down
+                        if miner.tile.tile_south is not None:
+                            miner.mine(miner.tile.tile_south, -1)
                         miner.build(miner.tile.tile_south, 'ladder')
                         if miner.tile.tile_south.is_ladder:
+                            print("Condition 6")
                             miner.move(miner.tile.tile_south)
                             # if at the bottom
                             if miner.tile.y == 29:
                                 at_bottom = True
                                 break
+                    
+                    else:
+                        miner.mine(tile_back(), -1)
+                        break
 
                     pass
             elif miner.tile.tile_south is None:
@@ -748,12 +761,16 @@ class AI(BaseAI):
         elif tile_back().is_hopper:
             # dump all cargo
             dump_all(miner, tile_back())
+            miner.buy('buildingMaterials', 3*self.game.ladder_cost)
             self.update_job_map(miner, 'Chaos_mode', 'return_for_upgrade_chaos')
             return True
         # move back to find hopper
         else:
             if tile_back() is not None:
-                miner.move(tile_back())
+                if not is_tile_empty(tile_back()):
+                    miner.mine(tile_back(), -1)
+                else:
+                    miner.move(tile_back())
         
         return False
 
@@ -788,7 +805,7 @@ class AI(BaseAI):
         if miner.mining_power:
             if tile_away() is not None:
                 # miner.mine(away, -1)
-                miner.miner(tile_away())
+                miner.mine(tile_away(), -1)
                 # change state to return_cargo_chaos
                 self.update_job_map(miner, 'Chaos_mode', 'return_cargo_chaos')
                 # check if column is colapsing
@@ -897,8 +914,10 @@ class AI(BaseAI):
     def protect_miners(self):
         dangerous_columns = [idx for idx in range(30) if self.is_collapsing(idx)]
         for col in dangerous_columns:
-            miners = [m for m in self.player.miners if m.x == col and m.y == 29]
+            miners = [m for m in self.player.miners if m.tile.x == col and m.tile.y == 29]
             for miner in miners:
+                if col < self.CHAOS_BOUND:
+                    miner.build(miner.tile, 'support')
                 tile_away = lambda: getattr(miner.tile, self.away)
                 tile_back = lambda: getattr(miner.tile, self.back)
                 if tile_back() is not None:
