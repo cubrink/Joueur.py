@@ -258,7 +258,8 @@ class AI(BaseAI):
             self.game.get_tile_at(miner_coordinates[0], miner_coordinates[1]+1),
             self.game.get_tile_at(miner_coordinates[0]+1, miner_coordinates[1]+1)
             ]
-        return all([temp_tile.dirt or temp_tile.ore for temp_tile in tile_check_list])
+        if temp_tile:
+            return all([temp_tile.dirt or temp_tile.ore for temp_tile in tile_check_list])
 
 
 
@@ -357,25 +358,10 @@ class AI(BaseAI):
         pass
 
     # TODO: add break condition when tile is None
+    # TODO: when moving away or back, check for ladder
     def mine_row(self, miner):
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
-
-        # additional case: what to do when the miner doesn't have enough material
-        #                  to place a support
-        # while miner can move or mine
-            # if cargo is full or not enough material for support
-                # move back until miner can drop cargo
-                    # drop cargo
-                    # buy materials for supports
-            # elif cargo not full and no block away -> move away
-                # if above or below is ore and miner can place dirt
-                    # mine ore and replace with dirt
-                # move away
-            # elif mine
-                # mine away (-1)
-                # if tile_away contains no dirt or ore
-                    # check if support needs to be placed
         
         # while miner can move or mine
         while miner.moves != 0 and miner.mining != 0:
@@ -395,12 +381,27 @@ class AI(BaseAI):
             elif self.current_cargo(miner) < miner.current_upgrade.cargo_capacity and is_tile_empty(tile_away()):
                 if tile_away() is not None:
                     miner.move(tile_away())
-
-
-               
-            
-
-
+                # if above or below is ore and miner can place dirt
+                if miner.tile.tile_north is not None:
+                    if miner.tile.tile_north.ore != 0:
+                        # mine ore and replace with dirt
+                        miner.mine(miner.tile.tile_north, -1)
+                    if is_tile_empty(miner.tile.tile_north):
+                        miner.dump(miner.tile.tile_north, 1)
+                if miner.tile.tile_south is not None:
+                    if miner.tile.tile_south.ore != 0:
+                        # mine ore and replace with dirt
+                        miner.mine(miner.tile.tile_south, -1)
+                    if is_tile_empty(miner.tile.tile_south):
+                        miner.dump(miner.tile.tile_south, 1)
+            # elif mine
+            # if tile_away contains no dirt or ore
+            elif not is_tile_empty(tile_away()):
+                # check if support needs to be placed
+                if self.support_needed(miner, tile_away()) and miner.building_materials > self.game.support_cost:
+                    miner.build(miner.tile, 'support')
+                miner.miner(tile_away(), -1)
+                
 
 
 
