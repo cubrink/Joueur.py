@@ -257,13 +257,13 @@ class AI(BaseAI):
     def miner_needed(self):
         miner = None
 
-        if len(self.player.miners) in [2]:
+        if len(self.player.miners) in [2, ]:
             if self.player.money >= self.game.spawn_price + (3 * self.game.upgrade_price):
                 # spawn Mega_miner and max upgrade
                 miner = self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 25, 'mega': True})
                 while miner.upgrade():
                     if miner.upgrade_level == self.game.max_upgrade_level:
-                        print("MEGA MINER IS ALIVE!!!")
+                        print("MEGA MINER IS ALIVE!!! -> LVL ", miner.upgrade_level)
             else:
                 return False
             
