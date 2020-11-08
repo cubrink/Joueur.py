@@ -272,17 +272,6 @@ class AI(BaseAI):
         while miner.mining_power > 0 and miner.moves > 0:
             # If miner.tile.x != self.player.base_tile.x:
             #       mine back
-<<<<<<< HEAD
-            if (tile_away().dirt + tile_away().ore > 0):
-                pass
-
-
-        print(f'type of tile_away = {type(tile_away())}')
-
-        miner.mine(miner.tile.tile_south, -1)
-        miner.move(miner.tile.tile_south)
-        miner.mine(tile_away(), -1)
-=======
             #       move back
             # If miner.tile.x == self.player.base_tile.x
             #       not mined away
@@ -324,7 +313,6 @@ class AI(BaseAI):
                     miner.move(miner.tile.tile_south)
                 else:
                     return
->>>>>>> 545ad8db454e153a2b4c458d4a3947f4a92f751a
 
 
         return
