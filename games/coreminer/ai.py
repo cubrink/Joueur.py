@@ -553,16 +553,20 @@ class AI(BaseAI):
             # get amount of material to clear
             material_needed_to_remove = tile_size(tile_back())
             # dump that amout of material behind
-            while miner.bombs + miner.dirt + miner.ore > material_needed_to_remove:
+            panic = 0
+            while miner.bombs + miner.dirt + miner.ore > material_needed_to_remove and panic < 10:
                 if not miner.dump(tile_away(), 'dirt', -1):
                     if not miner.dump(tile_away(), 'ore', 1):
                         break
+                panic += 1
             if miner.bombs + miner.dirt + miner.ore > material_needed_to_remove:
                 # if miner has no items and still can't carry all
-                while miner.mining_power and not is_tile_empty(tile_back()):
-                    if miner.mine(tile_back(), -1):
-                        miner.dump(tile_away(), 'dirt', -1)
-                        miner.dump(tile_away(), 'ore', -1)
+                panic = 0
+                while miner.mining_power and not is_tile_empty(tile_back()) and panic < 10:
+                    miner.dump(tile_away(), 'dirt', -1)
+                    miner.dump(tile_away(), 'ore', -1)
+                    miner.mine(tile_back(), -1)
+                    panic += 1
         
         if is_tile_empty(tile_back()):
             miner.move(tile_back())
