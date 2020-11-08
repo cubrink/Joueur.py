@@ -47,7 +47,7 @@ class AI(BaseAI):
             'None'
         ]
         self.job_map = {id(miner): ('None', 'Standby', dict()) for miner in self.player.miners}
-        self.standby = lambda: True
+        self.standby = lambda x: print('Standing by!')
 
         self.state_map = {
             'Ore_miner': {
