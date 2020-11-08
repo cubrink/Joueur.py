@@ -46,7 +46,7 @@ class AI(BaseAI):
             'Military',
             'None'
         ]
-        self.job_map = {id(miner): ('None', 'Standby', dict()) for miner in self.player.miners}
+        self.job_map = {id(miner): ('None', 'standby', dict()) for miner in self.player.miners}
         self.standby = lambda x: print('Standing by!')
 
         self.state_map = {
@@ -71,9 +71,11 @@ class AI(BaseAI):
                             'return_to_mining': self.standby, 
                             'mining': self.standby
                           },
-            'Military': {'Standby': self.standby},
-            'None': {'Standby': self.standby}
+            'Military': {'standby': self.standby},
+            'None': {'standby': self.standby}
         }
+
+        self.initial_turn = True
 
         # replace with your start logic
         
@@ -110,15 +112,23 @@ class AI(BaseAI):
         # <<-- Creer-Merge: runTurn -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         # Put your game logic here for runTurn
 
-        # If we have no miners and can afford one, spawn one
-        if len(self.player.miners) < 1 and self.player.money >= self.game.spawn_price:
-            prev = set((id(miner) for miner in self.player.miners))
-            self.player.spawn_miner()
-            new_miner_id = set((id(miner) for miner in self.player.miners)).difference(prev).pop()
-            miner = [m for m in self.player.miners if id(m) == new_miner_id][0]
-            details = {'job_row': 25}
-            self.update_job_map(miner, 'Shaft_miner', 'mining', details=details)
-            print(f'New miner id = {new_miner_id}')
+        if self.initial_turn:
+            for job_row in [25, 15]:
+                self.add_miner(job='Shaft_miner', state='mining', details={'job_row': job_row})
+            self.initial_turn = False
+
+        # # If we have no miners and can afford one, spawn one
+        # if len(self.player.miners) < 1 and self.player.money >= self.game.spawn_price:
+        #     prev = set((id(miner) for miner in self.player.miners))
+        #     self.player.spawn_miner()
+        #     new_miner_id = set((id(miner) for miner in self.player.miners)).difference(prev).pop()
+        #     miner = [m for m in self.player.miners if id(m) == new_miner_id][0]
+        #     details = {'job_row': 25}
+        #     self.update_job_map(miner, 'Shaft_miner', 'mining', details=details)
+        #     print(f'New miner id = {new_miner_id}')
+
+        if len(self.player.miner) == 2 and self.player.money >= self.game.spawn_price * 3:
+            self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 10})
 
 
         print("Current turn: ", self.game.current_turn)
@@ -231,10 +241,6 @@ class AI(BaseAI):
                     print('Miner Powered Up!')
     
 
-
-    def add_miner(self):
-        # add miner if desired
-        pass
         
 
 
@@ -269,13 +275,12 @@ class AI(BaseAI):
             if miner.tile.x != self.player.base_tile.x:
                 # Consider state change
                 if miner.tile.y >= self.job_map[id(miner)][-1]['job_row']:
-                    print("I'm here!!!!")
                     if material_left(tile_back()) > 0:
                         miner.mine(tile_back(), -1)
                         if material_left(tile_back()) > 0:
                             return False
                     self.update_job_map(miner, 'Ore_miner', 'mining')
-                    print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
+                    print(f"Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
                     return True
 
                 # If not alligned, mine
@@ -306,15 +311,11 @@ class AI(BaseAI):
                         if material_left(tile_back()) > 0:
                             return False
                     
-
-        print("job row = ", self.job_map[id(miner)][-1]['job_row'])
-
-        if miner.tile.y >= self.job_map[id(miner)][-1]['job_row']:
-            print('Here!')
-            miner.move(tile_away())
-            self.update_job_map(miner, 'Ore_miner', 'mining')
-            print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
-            return True
+        # if miner.tile.y >= self.job_map[id(miner)][-1]['job_row']:
+        #     miner.move(tile_away())
+        #     self.update_job_map(miner, 'Ore_miner', 'mining')
+        #     print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
+        #     return True
 
 
 
@@ -520,11 +521,23 @@ class AI(BaseAI):
 
     def update_job_map(self, miner, job, state, details=None):
         if id(miner) not in self.job_map:
-            print("Miner {id(miner)} not in update map assigning them None job")
-            self.job_map[id(miner)] = ('None', 'Standby', dict())
+            self.job_map[id(miner)] = ('None', 'standby', dict())
         if details is None:
             details = self.job_map[id(miner)][-1]
         self.job_map[id(miner)] = (job, state, details)
+
+
+    def add_miner(self, job='None', state='standby', details=dict()):
+        prev = set((id(miner) for miner in self.player.miners))
+        self.player.spawn_miner()
+        new_miner_id = set((id(miner) for miner in self.player.miners)).difference(prev).pop()
+        miner = [m for m in self.player.miners if id(m) == new_miner_id][0]
+        self.update_job_map(miner, job, state, details=details)
+        print(f'New miner id = {new_miner_id}')
+
+
+
+
 
 def miner_max_cargo(miner):
     return miner.upgrade_level
