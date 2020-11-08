@@ -51,7 +51,7 @@ class AI(BaseAI):
 
         self.state_map = {
             'Ore_miner': {
-                            'return_cargo': self.return_to_cargo, 
+                            'return_cargo': self.return_cargo, 
                             'return_to_mining': self.return_to_mining, 
                             'mining': self.ore_mining
                           },
@@ -125,8 +125,11 @@ class AI(BaseAI):
                 continue
             job, state = self.job_map[id(miner)]
             action = self.state_map[job][state]
-            consider_upgrade(miner)
-            action(miner)
+            while action(miner):
+                job, state = self.job_map[id(miner)]
+                action = self.state_map[job][state]
+            # consider_upgrade(miner)
+            # action(miner)
 
             print("(x, y) = ", miner.tile.x, miner.tile.y)
             print("(dirt, ore) = ", miner.dirt, miner.ore)
@@ -271,7 +274,7 @@ class AI(BaseAI):
                         miner.move(tile_away())
                         self.job_map[id(miner)] = ('Ore_miner', 'mining')
                         print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
-                        return
+                        return True
                 else:
                     return
 
@@ -279,10 +282,11 @@ class AI(BaseAI):
             miner.move(tile_away())
             self.job_map[id(miner)] = ('Ore_miner', 'mining')
             print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
+            return True
 
 
 
-        return
+        return False
     
 
 
@@ -404,7 +408,7 @@ class AI(BaseAI):
 
 
 
-    def return_to_cargo(self, miner):
+    def return_cargo(self, miner):
         # return miner to cargo - moving back to cargo
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
@@ -414,18 +418,18 @@ class AI(BaseAI):
             # dump all cargo
             dump_all(miner, miner.tile)
             # buy meterials until you have 3x required amount
-            while miner.building_materials < ((3+miner.upgrade_level)*self.game.support_cost):
+            while miner.building_materials < ((2+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
-            self.job_map[id(miner)] = ('Ore_mining', 'return_to_mining')
+            self.job_map[id(miner)] = ('Ore_miner', 'return_to_mining')
             return True
         # move back until miner can drop cargo
         elif tile_back().is_hopper:
             # dump all cargo
             dump_all(miner, tile_back())
             # buy materials until you have 3x required amount
-            while miner.building_materials < ((3+miner.upgrade_level)*self.game.support_cost):
+            while miner.building_materials < ((2+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
-            self.job_map[id(miner)] = ('Ore_mining', 'return_to_mining')
+            self.job_map[id(miner)] = ('Ore_miner', 'return_to_mining')
             return True
         else:
             if tile_back() is not None:
@@ -441,7 +445,7 @@ class AI(BaseAI):
         tile_back = lambda: getattr(miner.tile, self.back)
 
         if tile_away() is not None and not is_tile_empty(tile_away()):
-            self.job_map[id(miner)] = ('Ore_mining', 'mining')
+            self.job_map[id(miner)] = ('Ore_miner', 'mining')
             return True
         
         if tile_away() is not None:
@@ -467,13 +471,13 @@ class AI(BaseAI):
         # if cargo full
         if self.current_cargo(miner) == miner.current_upgrade.cargo_capacity:
             # go to state "return to cargo"
-            self.job_map[id(miner)] = ('Ore_mining', 'return_to_cargo')
+            self.job_map[id(miner)] = ('Ore_miner', 'return_cargo')
             return True
 
         # if no tile away
         if tile_away() is not None and is_tile_empty(tile_away()):
             # go to state "return to mining"
-            self.job_map[id(miner)] = ('Ore_mining', 'return_to_mining')
+            self.job_map[id(miner)] = ('Ore_miner', 'return_to_mining')
             return True
 
         if not is_tile_empty(tile_away()):
