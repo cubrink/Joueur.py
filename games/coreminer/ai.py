@@ -114,7 +114,7 @@ class AI(BaseAI):
         # Put your game logic here for runTurn
 
         if self.initial_turn:
-            for job_row in [25, 15]:
+            for job_row in [15]:
                 self.add_miner(job='Shaft_miner', state='mining', details={'job_row': job_row})
             self.initial_turn = False
 
@@ -128,8 +128,8 @@ class AI(BaseAI):
         #     self.update_job_map(miner, 'Shaft_miner', 'mining', details=details)
         #     print(f'New miner id = {new_miner_id}')
 
-        if len(self.player.miner) == 2 and self.player.money >= self.game.spawn_price * 3:
-            self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 10})
+        # if len(self.player.miners) == 2 and self.player.money >= self.game.spawn_price * 3:
+        #     self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 10})
 
 
         print("Current turn: ", self.game.current_turn)
@@ -306,6 +306,18 @@ class AI(BaseAI):
                     print(f"Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
                     return True
 
+
+                if material_left(tile_back()) == 0 and tile_back().is_hopper:
+                    miner.dump(tile_back(), 'ore', -1)
+                    miner.dump(tile_back(), 'dirt',-1)
+                if not miner.tile.is_ladder:
+                    if (miner.tile.y == 0):
+                        miner.buy('buildingMaterials', 2*self.game.ladder_cost)
+                    miner.buy('buildingMaterials', self.game.ladder_cost)
+                    miner.build(miner.tile, 'ladder')
+                if miner.tile.tile_north is not None and not miner.tile.tile_north.is_ladder:
+                    miner.buy('buildingMaterials', self.game.ladder_cost)
+                    miner.build(miner.tile.tile_north, 'ladder')
                 # If not alligned, mine
                 miner.mine(tile_back(), -1)
                 if (tile_back().dirt + tile_back().ore > 0):
@@ -392,6 +404,7 @@ class AI(BaseAI):
 
 
     def return_cargo(self, miner):
+        print("in return cargo")
         # TODO: make sure you can walk forward - place ladder or dirt as needed
 
         # return miner to cargo - moving back to cargo
@@ -430,6 +443,7 @@ class AI(BaseAI):
         
 
     def return_to_mining(self, miner):
+        print("in return to mining")
         # TODO: make sure you can walk forward - place ladder or dirt as needed
         # TODO: make sure you go back to desired rung
 
@@ -455,6 +469,7 @@ class AI(BaseAI):
 
 
     def ore_mining(self, miner):
+        print("In ore mining, materials: ", miner.building_materials)
         # mine away if possible
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
@@ -462,7 +477,7 @@ class AI(BaseAI):
         # check if state needs to be changed
         
         # if cargo full
-        if self.current_cargo(miner) == miner.current_upgrade.cargo_capacity:
+        if self.current_cargo(miner) == miner.current_upgrade.cargo_capacity or miner.building_materials < self.game.support_cost:
             # go to state "return to cargo"
             self.update_job_map(miner, 'Ore_miner', 'return_cargo')
             return True
@@ -475,11 +490,13 @@ class AI(BaseAI):
 
         if not is_tile_empty(tile_away()):
             miner.mine(tile_away(), -1)
+            # TODO
             # check if support needs to be placed
             tile = self.game.get_tile_at(tile_away().x, tile_away().y-1)
             if not self.is_supported(tile) and miner.building_materials > self.game.support_cost:
+                print("Building support!")
                 miner.build(tile_away(), 'support')
-            miner.move(tile_away())
+                miner.move(tile_away())
         
         return False
     
