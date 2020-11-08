@@ -686,6 +686,8 @@ class AI(BaseAI):
         at_bottom = False
         
         while miner.moves:
+            if miner.tile.is_hopper:
+                miner.move(tile_away())
             if tile_back() is not None and miner.tile.tile_south is not None:
                 # should the miner move down
                 if miner.tile.is_ladder and tile_back().is_hopper and miner.tile.tile_south.is_ladder:
