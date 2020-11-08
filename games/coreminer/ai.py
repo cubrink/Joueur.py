@@ -337,14 +337,15 @@ class AI(BaseAI):
                     if material_left(miner.tile.tile_south) > 0:
                         return
                     miner.move(miner.tile.tile_south)
-                    if miner.tile.y == 25 and material_left(tile_away()) == 0:
+                    if miner.tile.y == 25:
                         print("Changed state (1)")
                         miner.move(tile_away())
                         self.job_map[id(miner)] = ('Ore_miner', 'mining')
+                        return
                 else:
                     return
 
-        if miner.tile.y == 25 and material_left(tile_away()) == 0:
+        if miner.tile.y == 25:
             print("Changed state (2)")
             miner.move(tile_away())
             self.job_map[id(miner)] = ('Ore_miner', 'mining')
@@ -415,7 +416,7 @@ class AI(BaseAI):
                     while miner.building_materials < (2*self.game.support_cost):
                         miner.buy('buildingMaterials', self.game.support_cost)
                 # move back until miner can drop cargo
-                elif tile_away().is_hopper:
+                elif tile_back().is_hopper:
                     # dump all cargo
                     dump_all(miner, tile_back())
                     # buy materials until you have 2x required amount
@@ -434,20 +435,25 @@ class AI(BaseAI):
                         # mine ore and replace with dirt
                         miner.mine(miner.tile.tile_north, -1)
                     if is_tile_empty(miner.tile.tile_north):
-                        miner.dump(miner.tile.tile_north, 1)
+                        miner.dump(miner.tile.tile_north, 'dirt', 1)
                 if miner.tile.tile_south is not None:
                     if miner.tile.tile_south.ore != 0:
                         # mine ore and replace with dirt
                         miner.mine(miner.tile.tile_south, -1)
                     if is_tile_empty(miner.tile.tile_south):
-                        miner.dump(miner.tile.tile_south, 1)
+                        miner.dump(miner.tile.tile_south, 'dirt', 1)
             # elif mine
             # if tile_away contains no dirt or ore
             elif not is_tile_empty(tile_away()):
                 # check if support needs to be placed
-                if self.support_needed(miner, tile_away()) and miner.building_materials > self.game.support_cost:
-                    miner.build(miner.tile, 'support')
                 miner.mine(tile_away(), -1)
+                print("Mined")
+                print("Materials Away: ", tile_away().ore + tile_away().dirt)
+                if self.support_needed(miner, tile_away()):
+                    print("Support needed!")
+                    if miner.building_materials > self.game.support_cost:
+                        print("Building support")
+                        miner.build(tile_away(), 'support')
                 
 
 
