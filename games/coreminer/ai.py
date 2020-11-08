@@ -81,6 +81,8 @@ class AI(BaseAI):
         self.initial_turn = True
         self.update_set = set()
 
+        self.spawn_mega_miner = {2: 25, 11: 27, 19: 29, 25: 29}  # miner number: job_row
+
         # replace with your start logic
         
         # <<-- /Creer-Merge: start -->>
@@ -229,7 +231,7 @@ class AI(BaseAI):
         desired_lvl = 0
 
         if job == 'Ore_miner' or job == 'Shaft_miner':
-            if details['job_row'] < 18:
+            if details['job_row'] < 16:
                 desired_lvl = 1
             else:
                 desired_lvl = 2
@@ -241,6 +243,9 @@ class AI(BaseAI):
             desired_lvl = 3
         else:
             return
+        
+        if len(self.player.miners) > 12:
+            desired_lvl = 3
 
         if desired_lvl > miner.upgrade_level:
             # check bank to consider upgrading
@@ -257,10 +262,10 @@ class AI(BaseAI):
     def miner_needed(self):
         miner = None
 
-        if len(self.player.miners) in [2, ]:
+        if len(self.player.miners) in self.spawn_mega_miner:
             if self.player.money >= self.game.spawn_price + (3 * self.game.upgrade_price):
                 # spawn Mega_miner and max upgrade
-                miner = self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 25, 'mega': True})
+                miner = self.add_miner(job='Shaft_miner', state='mining', details={'job_row': self.spawn_mega_miner[len(self.player.miners)], 'mega': True})
                 while miner.upgrade():
                     if miner.upgrade_level == self.game.max_upgrade_level:
                         print("MEGA MINER IS ALIVE!!! -> LVL ", miner.upgrade_level)
