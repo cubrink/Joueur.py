@@ -46,7 +46,7 @@ class AI(BaseAI):
             'Military',
             'None'
         ]
-        self.job_map = {id(miner): ('None', 'Standby') for miner in self.player.miners}
+        self.job_map = {id(miner): ('None', 'Standby', dict()) for miner in self.player.miners}
         self.standby = lambda: True
 
         self.state_map = {
@@ -115,7 +115,9 @@ class AI(BaseAI):
             prev = set((id(miner) for miner in self.player.miners))
             self.player.spawn_miner()
             new_miner_id = set((id(miner) for miner in self.player.miners)).difference(prev).pop()
-            self.job_map[new_miner_id] = ('Shaft_miner', 'mining')
+            miner = [m for m in self.player.miners if id(m) == new_miner_id][0]
+            details = {'job_row': 25}
+            self.update_job_map(miner, 'Shaft_miner', 'mining', details=details)
             print(f'New miner id = {new_miner_id}')
 
 
@@ -124,10 +126,11 @@ class AI(BaseAI):
         for miner in self.player.miners:
             if not miner or not miner.tile:
                 continue
-            job, state = self.job_map[id(miner)]
+            job, state, _ = self.job_map[id(miner)]
+            print(id(miner), job, state)
             action = self.state_map[job][state]
             while action(miner):
-                job, state = self.job_map[id(miner)]
+                job, state, _ = self.job_map[id(miner)]
                 action = self.state_map[job][state]
             # consider_upgrade(miner)
             # action(miner)
@@ -235,10 +238,35 @@ class AI(BaseAI):
                 miner.mine(tile_back(), -1)
                 if (tile_back().dirt + tile_back().ore > 0):
                     # out of mining power
-                    return
-                else:
-                    if tile_back() is not None:
-                        miner.move(tile_back())
+                    return False
+                # Dump ore if possilbe
+                if tile_back().is_hopper:
+                    miner.dump(miner.tile, 'ore', -1)
+                    miner.dump(miner.tile, 'dirt',-1)
+                # Build ladder if possible
+                if not miner.tile.is_ladder:
+                    miner.buy('buildingMaterials', 5)
+                    miner.build(miner.tile, 'ladder')
+
+                # Nothing to mine laterally, mine down, if possible
+                if miner.tile.tile_south is not None:
+                    miner.mine(miner.tile.tile_south, -1)
+                    if material_left(miner.tile.tile_south) > 0:
+                        return
+                    miner.move(miner.tile.tile_south)
+                    if material_left(tile_back()) > 0:
+                        miner.mine(tile_back(), -1)
+                        if material_left(tile_back() > 0):
+                            return False
+                    if miner.tile.y >= self.job_map[id(miner)][-1]['job_row']:
+                        if material_left(tile_back()) > 0:
+                            miner.mine(tile_back(), -1)
+                            if material_left(tile_back() > 0):
+                                return False
+                            else:
+                                self.update_job_map(miner, 'Ore_miner', 'mining')
+                                print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
+                                return True
             else:
                 # Try mining away
                 if material_left(tile_away()) > 0:
@@ -255,22 +283,22 @@ class AI(BaseAI):
                     miner.build(tile_away(), 'ladder')
 
                 # Nothing to mine laterally, mine down, if possible
-                if miner.tile.tile_south is not None:
-                    miner.mine(miner.tile.tile_south, -1)
-                    if material_left(miner.tile.tile_south) > 0:
-                        return
-                    miner.move(miner.tile.tile_south)
-                    if miner.tile.y == 25:
-                        miner.move(tile_away())
-                        self.job_map[id(miner)] = ('Ore_miner', 'mining')
-                        print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
-                        return True
+                # if miner.tile.tile_south is not None:
+                #     miner.mine(miner.tile.tile_south, -1)
+                #     if material_left(miner.tile.tile_south) > 0:
+                #         return
+                #     miner.move(miner.tile.tile_south)
+                #     if miner.tile.y >= self.job_map[id(miner)][-1]['job_row']:
+                #         miner.move(tile_away())
+                #         self.update_job_map(miner, 'Ore_miner', 'mining')
+                #         print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
+                #         return True
                 else:
-                    return
+                    return False
 
-        if miner.tile.y == 25:
+        if miner.tile.y >= self.job_map[id(miner)][-1]['job_row']:
             miner.move(tile_away())
-            self.job_map[id(miner)] = ('Ore_miner', 'mining')
+            self.update_job_map(miner, 'Ore_miner', 'mining')
             print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
             return True
 
@@ -339,7 +367,7 @@ class AI(BaseAI):
             # buy meterials until you have 3x required amount
             while miner.building_materials < ((2+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
-            self.job_map[id(miner)] = ('Ore_miner', 'return_to_mining')
+            self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
             return True
         # the tile back is the hopper
         elif tile_back().is_hopper:
@@ -348,7 +376,7 @@ class AI(BaseAI):
             # buy materials until you have 3x required amount
             while miner.building_materials < ((2+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
-            self.job_map[id(miner)] = ('Ore_miner', 'return_to_mining')
+            self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
             return True
         # move back to find hopper
         else:
@@ -372,7 +400,7 @@ class AI(BaseAI):
         tile_back = lambda: getattr(miner.tile, self.back)
 
         if tile_away() is not None and not is_tile_empty(tile_away()):
-            self.job_map[id(miner)] = ('Ore_miner', 'mining')
+            self.update_job_map(miner, 'Ore_miner', 'mining')
             return True
         
         if tile_away() is not None:
@@ -398,13 +426,13 @@ class AI(BaseAI):
         # if cargo full
         if self.current_cargo(miner) == miner.current_upgrade.cargo_capacity:
             # go to state "return to cargo"
-            self.job_map[id(miner)] = ('Ore_miner', 'return_cargo')
+            self.update_job_map(miner, 'Ore_miner', 'return_cargo')
             return True
 
         # if no tile away
         if tile_away() is not None and is_tile_empty(tile_away()):
             # go to state "return to mining"
-            self.job_map[id(miner)] = ('Ore_miner', 'return_to_mining')
+            self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
             return True
 
         if not is_tile_empty(tile_away()):
@@ -476,6 +504,13 @@ class AI(BaseAI):
 
 
 
+    def update_job_map(self, miner, job, state, details=None):
+        if id(miner) not in self.job_map:
+            print("Miner {id(miner)} not in update map assigning them None job")
+            self.job_map[id(miner)] = ('None', 'Standby', dict())
+        if details is None:
+            details = self.job_map[id(miner)][-1]
+        self.job_map[id(miner)] = (job, state, details)
 
 def miner_max_cargo(miner):
     return miner.upgrade_level
