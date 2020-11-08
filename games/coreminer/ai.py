@@ -54,6 +54,7 @@ class AI(BaseAI):
                             'return_cargo': self.return_cargo, 
                             'return_to_mining': self.return_to_mining, 
                             'mining': self.ore_mining,
+                            'return_for_upgrade': self.return_for_upgrade,
                             'emergency_return': self.emergency_return
                           },
             'Mass_miner': {
@@ -246,8 +247,7 @@ class AI(BaseAI):
                 if miner.tile.is_hopper:
                     if miner.upgrade():
                         print('Miner Powered Up!')
-                else:
-                    self.update_job_map(miner, self.job_map[id(miner)][0], 'return_for_upgrade')
+
     
 
 
@@ -521,7 +521,7 @@ class AI(BaseAI):
             # buy meterials until you have 3x required amount
             while miner.building_materials < ((2+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
-            self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
+            self.update_job_map(miner, 'Ore_miner', 'return_for_upgrade')
             return True
         # the tile back is the hopper
         elif tile_back().is_hopper:
@@ -530,7 +530,7 @@ class AI(BaseAI):
             # buy materials until you have 3x required amount
             while miner.building_materials < ((2+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
-            self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
+            self.update_job_map(miner, 'Ore_miner', 'return_for_upgrade')
             return True
         # move back to find hopper
         else:
@@ -649,20 +649,25 @@ class AI(BaseAI):
         if tile_back() is not None:
             # check if miner is on hopper
             if miner.tile.is_hopper:
-                miner.upgrade()
-                return True
+                if miner.upgrade():
+                    if self.job_map[id(miner)][0] == 'Ore_miner':
+                        self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
+                    return True
             # the tile back is the hopper
             elif tile_back().is_hopper:
                 miner.move(tile_back())
-                miner.upgrade()
-                return True
+                if miner.upgrade():
+                    if self.job_map[id(miner)][0] == 'Ore_miner':
+                        self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
+                    return True
+                return False
             # move back to find hopper
             else:
                 # check for missing tile beneth tile back
                 if self.walkable(tile_back()):
                     miner.move(tile_back())
                 else:
-                    self.update_job_map(miner, 'Ore_miner', 'emergency_return')
+                    self.update_job_map(miner, self.job_map[id(miner)][0], 'emergency_return')
                     return True
         
         return False
