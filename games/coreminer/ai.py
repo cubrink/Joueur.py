@@ -53,7 +53,8 @@ class AI(BaseAI):
             'Ore_miner': {
                             'return_cargo': self.return_cargo, 
                             'return_to_mining': self.return_to_mining, 
-                            'mining': self.ore_mining
+                            'mining': self.ore_mining,
+                            'emergency_return': self.emercency_return
                           },
             'Mass_miner': {
                             'return_cargo': self.standby, 
@@ -207,6 +208,7 @@ class AI(BaseAI):
 
 
     def is_supported(self, tile):
+        # tile is the tile to see if it will fall
         if is_tile_empty(tile):
             return True
         
@@ -351,7 +353,7 @@ class AI(BaseAI):
                 miner.buy('buildingMaterials', self.game.support_cost)
             self.job_map[id(miner)] = ('Ore_miner', 'return_to_mining')
             return True
-        # move back until miner can drop cargo
+        # the tile back is the hopper
         elif tile_back().is_hopper:
             # dump all cargo
             dump_all(miner, tile_back())
@@ -360,21 +362,26 @@ class AI(BaseAI):
                 miner.buy('buildingMaterials', self.game.support_cost)
             self.job_map[id(miner)] = ('Ore_miner', 'return_to_mining')
             return True
+        # move back to find hopper
         else:
             if tile_back() is not None:
-                miner.move(tile_back())
+                # check for missing tile beneth tile back
+                if self.walkable(tile_back()):
+                    miner.move(tile_back())
+                else:
+                    self.job_map[id(miner)] = ('Ore_miner', 'emergency_return')
+                    return True
         
         return False
         
 
     def return_to_mining(self, miner):
         # TODO: make sure you can walk forward - place ladder or dirt as needed
+        # TODO: make sure you go back to desired rung
 
         # return miner to mining - moving away as far as possible
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
-
-        
 
         if tile_away() is not None and not is_tile_empty(tile_away()):
             self.job_map[id(miner)] = ('Ore_miner', 'mining')
@@ -421,6 +428,23 @@ class AI(BaseAI):
             miner.move(tile_away())
         
         return False
+    
+
+
+    def emergency_return(self, miner):
+
+        tile_away = lambda: getattr(miner.tile, self.away)
+        tile_back = lambda: getattr(miner.tile, self.back)
+
+        # state called when the miner gets stuck trying to return return cargo
+        miner.move(tile_back())
+
+        # check if next tile back is the chute
+        if tile_back().is_hopper():
+            self.job_map[id(miner)] = ('Ore_miner', 'return_cargo')
+            return True
+        
+        return False
 
 
 
@@ -430,7 +454,28 @@ class AI(BaseAI):
     def current_cargo(self, miner):
         return miner.dirt + miner.ore + miner.building_materials + (miner.bombs * self.game.bomb_size)
         
+    def walkable(self, tile):
+        # return true if miner can move, otherwise false
+        if tile.is_ladder:
+            return True
+        if not is_tile_empty(self.game.get_tile_at(tile.x, tile.y+1)):
+            return True
+        return False
+    
+    def safe_dump(self, tile):
+        # tile is the tile to walk to
+        # need to check if it will be supported
 
+        # check 2 tiles down
+        if not is_tile_empty(self.game.get_tile_at(tile.x, tile.y+2)):
+            return True
+        #check the side tiles 1 tile down to see if both are supported
+        tiles = [self.game.get_tile_at(tile.x-1, tile.y+1), self.game.get_tile_at(tile.x+1, tile.y+1)]
+        if all([temp_tile is not None for temp_tile in tiles]):
+            if all([self.is_supported(temp_tile) for temp_tile in tiles]):
+                return True
+
+        return False
 
 
 
@@ -447,7 +492,6 @@ def dump_all(miner, chute):
 def is_tile_empty(tile_to_check):
     # check if the tile is empty
     return tile_to_check.dirt == 0 and tile_to_check.ore == 0
-
 
 
 
