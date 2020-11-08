@@ -207,18 +207,6 @@ class AI(BaseAI):
 
 
 
-    def is_supported(self, tile):
-        # tile is the tile to see if it will fall
-        if is_tile_empty(tile):
-            return True
-        
-        # consider y-1
-        tiles = [self.game.get_tile_at(x, tile.y+1) for x in [tile.x-1, tile.x, tile.x+1]]
-        tiles = [t for t in tiles if t is not None]
-        return any((t.is_support for t in tiles))
-
-
-
 
 
 
@@ -450,6 +438,15 @@ class AI(BaseAI):
 
 
 
+    def is_supported(self, tile):
+        # tile is the tile to see if it will fall
+        if is_tile_empty(tile):
+            return True
+        
+        # consider y-1
+        tiles = [self.game.get_tile_at(x, tile.y+1) for x in [tile.x-1, tile.x, tile.x+1]]
+        tiles = [t for t in tiles if t is not None]
+        return any((t.is_support for t in tiles))
 
     def current_cargo(self, miner):
         return miner.dirt + miner.ore + miner.building_materials + (miner.bombs * self.game.bomb_size)
