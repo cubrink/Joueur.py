@@ -125,62 +125,12 @@ class AI(BaseAI):
                 continue
             job, state = self.job_map[id(miner)]
             action = self.state_map[job][state]
+            consider_upgrade(miner)
             action(miner)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            
-            # self.shaft_mining(miner)
-            # print("Turn: ",self.game.current_turn)
-            # print(f'Miner {id(miner)}: (Job, state) = {self.job_map[id(miner)]}')
-            # print("Correct function? ", action == self.shaft_mining)
-            # print(action)
-            # print(self.shaft_mining)
 
             print("(x, y) = ", miner.tile.x, miner.tile.y)
             print("(dirt, ore) = ", miner.dirt, miner.ore)
 
-            # # Sell all materials
-            # sellTile = self.game.get_tile_at(self.player.base_tile.x, miner.tile.y)
-            # if sellTile and sellTile.owner == self.player:
-            #     miner.dump(sellTile, "dirt", -1)
-            #     miner.dump(sellTile, "ore", -1)
-
-            # eastTile = miner.tile.tile_east
-            # westTile = miner.tile.tile_west
-
-            # # Mine east and west tiles, hopper side first
-            # if eastTile.x == self.player.base_tile.x:
-            #     if eastTile:
-            #         miner.mine(eastTile, -1)
-            #     if westTile:
-            #         miner.mine(westTile, -1)
-            # else:
-            #     if westTile:
-            #         miner.mine(westTile, -1)
-            #     if eastTile:
-            #         miner.mine(eastTile, -1)
-
-            # # Check to make sure east and west tiles are mined
-            # if (eastTile and eastTile.ore + eastTile.dirt == 0) and (westTile and westTile.ore + westTile.dirt == 0):
-            #     # Dig down
-            #     if miner.tile.tile_south:
-            #         miner.mine(miner.tile.tile_south, -1)
-            
         return True
         # <<-- /Creer-Merge: runTurn -->>
 
@@ -271,7 +221,6 @@ class AI(BaseAI):
 
     def shaft_mining(self, miner):
         print("Start shaft mining")
-        print("base x:", self.player.base_tile.x)
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
         material_left = lambda x: x.ore + x.dirt
@@ -319,17 +268,17 @@ class AI(BaseAI):
                         return
                     miner.move(miner.tile.tile_south)
                     if miner.tile.y == 25:
-                        print("Changed state (1)")
                         miner.move(tile_away())
                         self.job_map[id(miner)] = ('Ore_miner', 'mining')
+                        print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
                         return
                 else:
                     return
 
         if miner.tile.y == 25:
-            print("Changed state (2)")
             miner.move(tile_away())
             self.job_map[id(miner)] = ('Ore_miner', 'mining')
+            print("Miner {id(miner)} has changed state to ('Ore_miner', 'mining')")
 
 
 
@@ -378,13 +327,23 @@ class AI(BaseAI):
     # TODO: add break condition when tile is None
     # TODO: when moving away or back, check for ladder
     def mine_row(self, miner):
-        print()
-        print()
-        print()
-        print("In mine row:")
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
         
+        # Not standing on hopper
+        if tile_back() is not None and tile_back().is_hopper and not miner.tile.is_ladder:
+            miner.buy('buildingMaterials', self.game.support_cost)
+            miner.build(miner.tile, 'ladder')
+        
+        # Standing on hopper
+        if miner.tile.is_hopper:
+            if not is_tile_empty(tile_away()):
+                miner.mine(tile_away(), -1)
+            if is_tile_empty(tile_away()):
+                miner.buy('buildingMaterials', self.game.support_cost)
+                miner.build(miner.tile, 'ladder')
+
+
         # while miner can move or mine
         while miner.moves != 0 and miner.mining_power != 0:
             # if cargo is full or not enough material for support
@@ -401,7 +360,7 @@ class AI(BaseAI):
                     # dump all cargo
                     dump_all(miner, tile_back())
                     # buy materials until you have 2x required amount
-                    while miner.building_materials < (2*self.game.support_cost):
+                    while miner.building_materials < ((3+miner.upgrade_level)*self.game.support_cost):
                         miner.buy('buildingMaterials', self.game.support_cost)
                 else:
                     if tile_back() is not None:
