@@ -53,7 +53,7 @@ class AI(BaseAI):
             'Ore_miner': {
                             'return_cargo': self.standby, 
                             'return_to_mining': self.standby, 
-                            'mining': self.standby
+                            'mining': self.mine_row
                           },
             'Mass_miner': {
                             'return_cargo': self.standby, 
@@ -117,6 +117,8 @@ class AI(BaseAI):
             self.job_map[new_miner_id] = ('Shaft_miner', 'mining')
             print(f'New miner id = {new_miner_id}')
 
+
+        print("Current turn: ", self.game.current_turn)
 
         for miner in self.player.miners:
             if not miner or not miner.tile:
@@ -332,8 +334,18 @@ class AI(BaseAI):
                     if material_left(miner.tile.tile_south) > 0:
                         return
                     miner.move(miner.tile.tile_south)
+                    if miner.tile.y == 25 and material_left(tile_away()) == 0:
+                        print("Changed state (1)")
+                        miner.move(tile_away())
+                        self.job_map[id(miner)] = ('Ore_miner', 'mining')
                 else:
                     return
+
+        if miner.tile.y == 25 and material_left(tile_away()) == 0:
+            print("Changed state (2)")
+            miner.move(tile_away())
+            self.job_map[id(miner)] = ('Ore_miner', 'mining')
+
 
 
         return
@@ -377,14 +389,19 @@ class AI(BaseAI):
         # position for the start of this function should be (1,2) or (28,2)
         pass
 
+
     # TODO: add break condition when tile is None
     # TODO: when moving away or back, check for ladder
     def mine_row(self, miner):
+        print()
+        print()
+        print()
+        print("In mine row:")
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
         
         # while miner can move or mine
-        while miner.moves != 0 and miner.mining != 0:
+        while miner.moves != 0 and miner.mining_power != 0:
             # if cargo is full or not enough material for support
             if self.current_cargo(miner) == miner.current_upgrade.cargo_capacity or miner.building_materials < self.game.support_cost:
                 # move back until miner can drop cargo
@@ -429,7 +446,7 @@ class AI(BaseAI):
 
 
     def current_cargo(self, miner):
-        return miner.dirt + miner.ore + miner.buildingMaterials + (miner.bombs * self.game.bombSize)
+        return miner.dirt + miner.ore + miner.building_materials + (miner.bombs * self.game.bomb_size)
         
 
 
