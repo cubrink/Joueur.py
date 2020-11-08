@@ -65,6 +65,11 @@ class AI(BaseAI):
                             'return_to_mining': self.standby, 
                             'mining': self.standby
                           },
+            'Gold_digger':{
+                            'return_cargo': self.standby, 
+                            'return_to_mining': self.standby, 
+                            'mining': self.standby
+                          },
             'Military': {'Standby': self.standby},
             'None': {'Standby': self.standby}
         }
@@ -90,6 +95,8 @@ class AI(BaseAI):
             won (bool): True means you won, False means you lost.
             reason (str): The human readable string explaining why your AI won or lost.
         """
+        print("Final value: ", self.player.value)
+        print("Final money: ", self.player.money)
         # <<-- Creer-Merge: end -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         # replace with your end logic
         # <<-- /Creer-Merge: end -->>
@@ -104,7 +111,16 @@ class AI(BaseAI):
 
         # If we have no miners and can afford one, spawn one
         if len(self.player.miners) < 1 and self.player.money >= self.game.spawn_price:
+            prev = set((id(miner) for miner in self.player.miners))
             self.player.spawn_miner()
+            new_miner_id = set((id(miner) for miner in self.player.miners)).difference(prev).pop()
+            print(f'New miner id = {new_miner_id}')
+
+        # if self.player.money > 5*self.game.spawn_price:
+        #     prev = set((id(miner) for miner in self.player.miners))
+        #     self.player.spawn_miner()
+        #     new_miner_id = set((id(miner) for miner in self.player.miners)).difference(prev).pop()
+        #     print(f'New miner id = {new_miner_id}')
 
         for miner in self.player.miners:
             if not miner or not miner.tile:
@@ -251,41 +267,53 @@ class AI(BaseAI):
         print("base x:", self.player.base_tile.x)
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
+        material_left = lambda x: x.ore + x.dirt
 
-        if (miner.tile.is_hopper):
-            print("at hopper 1")
-            miner.dump(miner.tile, 'ore', -1)
-            miner.dump(miner.tile, 'dirt',-1)
-            miner.buy('buildingMaterials', 10)
-            miner.build(tile_away(), 'ladder')
-        elif (tile_back() is not None and tile_back().is_hopper()):
-            print("at hopper 2")
-            miner.dump(tile_back(), 'ore', -1)
-            miner.dump(tile_back(), 'dirt',-1)
-            miner.buy('buildingMaterials', 10)
-            miner.build(miner.tile, 'ladder')
-
-        while miner.mining_power > 0:
+        while miner.mining_power > 0 and miner.moves > 0:
             # If miner.tile.x != self.player.base_tile.x:
             #       mine back
-            if (tile_away().dirt + tile_away().ore > 0):
+            #       move back
+            # If miner.tile.x == self.player.base_tile.x
+            #       not mined away
+            #           mine away
+            #           sell materials
+            #           build ladder
+            #       else 
+            #           mine down
+            #       
+            if miner.tile.x != self.player.base_tile.x:
+                # If not alligned, mine back
+                miner.mine(tile_back(), -1)
+                if (tile_back().dirt + tile_back().ore > 0):
+                    # out of mining power
+                    return
+                else:
+                    if tile_back() is not None:
+                        miner.move(tile_back())
+            else:
+                # Try mining away
+                if material_left(tile_away()) > 0:
+                    miner.mine(tile_away(), -1)
+                    if (tile_away().dirt + tile_away().ore > 0):
+                        # out of mining power
+                        return
+                # Add ladder, if needed
+                if miner.tile.is_hopper:
+                    miner.dump(miner.tile, 'ore', -1)
+                    miner.dump(miner.tile, 'dirt',-1)
+                if not tile_away().is_ladder:
+                    miner.buy('buildingMaterials', 5)
+                    miner.build(tile_away(), 'ladder')
 
+                # Nothing to mine laterally, mine down, if possible
+                if miner.tile.tile_south is not None:
+                    miner.mine(miner.tile.tile_south, -1)
+                    if material_left(miner.tile.tile_south) > 0:
+                        return
+                    miner.move(miner.tile.tile_south)
+                else:
+                    return
 
-
-        print(f'type of tile_away = {type(tile_away())}')
-
-        miner.mine(miner.tile.tile_south, -1)
-        miner.move(miner.tile.tile_south)
-        miner.mine(tile_away(), -1)
-
-        # print("1")
-        # miner.move(tile_away())
-        # print("2")
-        # miner.mine(miner.tile.tile_south, -1)
-        # print("3")
-        # miner.mine(tile_back(), -1)
-        # print("4")
-        # miner.move(tile_back())
 
         return
 
