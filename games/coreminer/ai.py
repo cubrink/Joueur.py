@@ -35,6 +35,7 @@ class AI(BaseAI):
     def start(self) -> None:
         """This is called once the game starts and your AI knows its player and game. You can initialize your AI here.
         """
+        # <<-- Creer-Merge: start -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         self.away = "tile_east" if self.player.base_tile.x == 0 else "tile_west"
         self.back = "tile_east" if self.player.base_tile.x != 0 else "tile_west"
 
@@ -45,8 +46,7 @@ class AI(BaseAI):
             'Military',
             'None'
         ]
-        self.job_map = {miner: 'None' for miner in self.player.miners}
-
+        self.job_map = {id(miner): ('None', 'Standby') for miner in self.player.miners}
         self.standby = lambda: True
 
         self.state_map = {
@@ -63,7 +63,7 @@ class AI(BaseAI):
             'Shaft_miner':{
                             'return_cargo': self.standby, 
                             'return_to_mining': self.standby, 
-                            'mining': self.standby
+                            'mining': self.shaft_mining
                           },
             'Gold_digger':{
                             'return_cargo': self.standby, 
@@ -74,9 +74,6 @@ class AI(BaseAI):
             'None': {'Standby': self.standby}
         }
 
-
-
-        # <<-- Creer-Merge: start -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         # replace with your start logic
         
         # <<-- /Creer-Merge: start -->>
@@ -95,11 +92,14 @@ class AI(BaseAI):
             won (bool): True means you won, False means you lost.
             reason (str): The human readable string explaining why your AI won or lost.
         """
-        print("Final value: ", self.player.value)
-        print("Final money: ", self.player.money)
+
         # <<-- Creer-Merge: end -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         # replace with your end logic
+        print("Final value: ", self.player.value)
+        print("Final money: ", self.player.money)
         # <<-- /Creer-Merge: end -->>
+
+
     def run_turn(self) -> bool:
         """This is called every time it is this AI.player's turn.
 
@@ -114,20 +114,40 @@ class AI(BaseAI):
             prev = set((id(miner) for miner in self.player.miners))
             self.player.spawn_miner()
             new_miner_id = set((id(miner) for miner in self.player.miners)).difference(prev).pop()
+            self.job_map[new_miner_id] = ('Shaft_miner', 'mining')
             print(f'New miner id = {new_miner_id}')
 
-        # if self.player.money > 5*self.game.spawn_price:
-        #     prev = set((id(miner) for miner in self.player.miners))
-        #     self.player.spawn_miner()
-        #     new_miner_id = set((id(miner) for miner in self.player.miners)).difference(prev).pop()
-        #     print(f'New miner id = {new_miner_id}')
 
         for miner in self.player.miners:
             if not miner or not miner.tile:
                 continue
-            self.shaft_mining(miner)
-            print("Turn: ",self.game.current_turn)
+            job, state = self.job_map[id(miner)]
+            action = self.state_map[job][state]
+            action(miner)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+            # self.shaft_mining(miner)
+            # print("Turn: ",self.game.current_turn)
+            # print(f'Miner {id(miner)}: (Job, state) = {self.job_map[id(miner)]}')
+            # print("Correct function? ", action == self.shaft_mining)
+            # print(action)
+            # print(self.shaft_mining)
 
             print("(x, y) = ", miner.tile.x, miner.tile.y)
             print("(dirt, ore) = ", miner.dirt, miner.ore)
@@ -222,10 +242,10 @@ class AI(BaseAI):
         # you want to go; in that case, we'll just return an empty path.
         return []
 
+
+
     # <<-- Creer-Merge: functions -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
     # if you need additional functions for your AI you can add them here
-    # <<-- /Creer-Merge: functions -->>
-
 
     def support_needed(self, miner_mining, tile_to_remove):
         # check to see if a support block needs to be placed before you mine the block
@@ -431,3 +451,5 @@ def is_tile_empty(tile_to_check):
 
 
 
+
+    # <<-- /Creer-Merge: functions -->>
