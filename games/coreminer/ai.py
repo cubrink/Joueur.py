@@ -75,6 +75,8 @@ class AI(BaseAI):
             'None': {'Standby': self.standby}
         }
 
+        self.miner_row_gen = row_generator()
+
         # replace with your start logic
         
         # <<-- /Creer-Merge: start -->>
@@ -116,7 +118,7 @@ class AI(BaseAI):
             self.player.spawn_miner()
             new_miner_id = set((id(miner) for miner in self.player.miners)).difference(prev).pop()
             miner = [m for m in self.player.miners if id(m) == new_miner_id][0]
-            details = {'job_row': 25}
+            details = {'job_row': 17}
             self.update_job_map(miner, 'Shaft_miner', 'mining', details=details)
             print(f'New miner id = {new_miner_id}')
 
@@ -212,14 +214,14 @@ class AI(BaseAI):
         job, state, details = self.job_map[id(miner)]
         desired_lvl = 0
 
-        if job == "Ore_miner" or job == "Shaft_miner":
-            if details["job_row"] < 18:
+        if job == 'Ore_miner' or job == 'Shaft_miner':
+            if details['job_row'] < 18:
                 desired_lvl = 1
             else:
                 desired_lvl = 2
-        elif job == "Mass_miner":
+        elif job == 'Mass_miner':
             desired_lvl = 1
-        elif job == "Military":
+        elif job == 'Military':
             desired_lvl = 3
         else:
             return
@@ -232,9 +234,27 @@ class AI(BaseAI):
     
 
 
-    def add_miner(self):
+    def miner_needed(self):
         # add miner if desired
-        pass
+        if self.player.money >= self.game.spawn_price * 3:
+            # get the levels with working miners
+            job_levels = []
+            for temp_miner in self.game.miners:
+                if self.job_map[id(temp_miner)][0] in ['Ore_miner', 'Shaft_miner']:
+                    job_levels.append(self.job_map[id(temp_miner)][-1]['job_row'])
+
+            next_row = next(self.miner_row_gen)
+            while next_row in job_levels:
+                next_row = next(self.miner_row_gen)
+
+            self.add_miner()                
+            # we want every other row to have a ore miner starting at 5 going to 29
+            # start at 17
+
+
+
+
+        # use self.add_miner() to spawn miner
         
 
 
@@ -461,6 +481,7 @@ class AI(BaseAI):
     
 
 
+    # TODO: add case where miner can't move left and needs to dump stuff
     def emergency_return(self, miner):
 
         tile_away = lambda: getattr(miner.tile, self.away)
@@ -539,6 +560,16 @@ def is_tile_empty(tile_to_check):
     # check if the tile is empty
     return tile_to_check.dirt == 0 and tile_to_check.ore == 0
 
+def row_generator(start=17, stride=2):
+    curr = start
+    yield start
+    stride_idx = 1
+    while 4 < curr < 30:
+        curr = start + stride*stride_idx
+        yield curr
+        curr = start - stride*stride_idx
+        yield curr
+        stride_idx += 1
 
 
     # <<-- /Creer-Merge: functions -->>
