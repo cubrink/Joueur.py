@@ -91,6 +91,7 @@ class AI(BaseAI):
         self.miner_row_gen = row_generator()
         self.initial_turn = True
         self.update_set = set()
+        self.CHAOS_BOUND = 12
 
         self.spawn_mega_miner = {2: 25, 11: 27, 19: 29, 25: 29}  # miner number: job_row
 
@@ -239,7 +240,7 @@ class AI(BaseAI):
         else:
             return
         
-        if len(self.player.miners) > 12:
+        if len(self.player.miners) > self.CHAOS_BOUND:
             desired_lvl = 3
 
         if desired_lvl > miner.upgrade_level:
@@ -474,7 +475,7 @@ class AI(BaseAI):
         # TODO: make sure you go back to desired rung
 
 
-        if self.get_row_depth(self.job_map[id(miner)][-1]['job_row']) >= 12:
+        if self.get_row_depth(self.job_map[id(miner)][-1]['job_row']) >= self.CHAOS_BOUND:
             self.update_job_map(miner, 'Chaos_mode', 'start_chaos')
             print(f"Miner {id(miner)}: Entering Chaos mode...")
             return True
@@ -760,6 +761,7 @@ class AI(BaseAI):
         elif tile_back().is_hopper:
             # dump all cargo
             dump_all(miner, tile_back())
+            miner.buy('buildingMaterials', 3*self.game.ladder_cost)
             self.update_job_map(miner, 'Chaos_mode', 'return_for_upgrade_chaos')
             return True
         # move back to find hopper
@@ -914,6 +916,8 @@ class AI(BaseAI):
         for col in dangerous_columns:
             miners = [m for m in self.player.miners if m.tile.x == col and m.tile.y == 29]
             for miner in miners:
+                if col < self.CHAOS_BOUND:
+                    miner.build(miner.tile, 'support')
                 tile_away = lambda: getattr(miner.tile, self.away)
                 tile_back = lambda: getattr(miner.tile, self.back)
                 if tile_back() is not None:
