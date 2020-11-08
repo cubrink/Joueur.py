@@ -677,13 +677,14 @@ class AI(BaseAI):
 
     # TODO: ladder checks
     def start_chaos(self, miner):
+        print("In start chaos")
         # have the miner go from anywhere on the map and go to the lowest hopper point
 
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
 
         at_bottom = False
-
+        
         while miner.moves:
             if tile_back() is not None and miner.tile.tile_south is not None:
                 # should the miner move down
@@ -694,14 +695,14 @@ class AI(BaseAI):
                         at_bottom = True
                         break
                 # should the miner move back
-                elif is_tile_empty(tile_back()):
+                elif is_tile_empty(tile_back()) and not tile_back().is_hopper:
                     miner.move(tile_back()) 
                 elif miner.tile.tile_south.is_ladder:
                     
                     # ADD LADDER CONDITION HERE
 
                     pass
-            elif miner.tile.til_south is None:
+            elif miner.tile.tile_south is None:
                 at_bottom = True
                 break
             else:
@@ -714,6 +715,7 @@ class AI(BaseAI):
 
 
     def return_cargo_chaos(self, miner):
+        print("In return cargo chaos")
         # return miner to cargo - moving back to cargo
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
@@ -738,7 +740,8 @@ class AI(BaseAI):
         return False
 
 
-    def return_to_mining_chaos(self, miner):     
+    def return_to_mining_chaos(self, miner):   
+        print("In return to mining chaos")  
         # return miner to the front line - moving away as far as possible (suicide zone)
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
@@ -755,6 +758,7 @@ class AI(BaseAI):
 
 
     def mining_chaos(self, miner):
+        print("In mining chaos")
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
 
@@ -764,7 +768,7 @@ class AI(BaseAI):
             miner.move(tile_away())
         # if miner.mining_power
         if miner.mining_power:
-            if tile_away() is not none:
+            if tile_away() is not None:
                 # miner.mine(away, -1)
                 miner.miner(tile_away())
                 # change state to return_cargo_chaos
