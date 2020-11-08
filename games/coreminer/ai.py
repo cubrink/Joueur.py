@@ -272,17 +272,6 @@ class AI(BaseAI):
         while miner.mining_power > 0 and miner.moves > 0:
             # If miner.tile.x != self.player.base_tile.x:
             #       mine back
-<<<<<<< HEAD
-            if (tile_away().dirt + tile_away().ore > 0):
-                pass
-
-
-        print(f'type of tile_away = {type(tile_away())}')
-
-        miner.mine(miner.tile.tile_south, -1)
-        miner.move(miner.tile.tile_south)
-        miner.mine(tile_away(), -1)
-=======
             #       move back
             # If miner.tile.x == self.player.base_tile.x
             #       not mined away
@@ -324,7 +313,6 @@ class AI(BaseAI):
                     miner.move(miner.tile.tile_south)
                 else:
                     return
->>>>>>> 545ad8db454e153a2b4c458d4a3947f4a92f751a
 
 
         return
@@ -332,7 +320,7 @@ class AI(BaseAI):
 
 
     # TODO
-    def  mass_mining(self, miner):
+    def mass_mining(self, miner):
         # mine all the top layers of the map
         
         tile_away = lambda: getattr(miner.tile, self.away)
@@ -368,6 +356,7 @@ class AI(BaseAI):
         # position for the start of this function should be (1,2) or (28,2)
         pass
 
+    # TODO: add break condition when tile is None
     def mine_row(self, miner):
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
@@ -382,7 +371,7 @@ class AI(BaseAI):
             # elif cargo not full and no block away -> move away
                 # if above or below is ore and miner can place dirt
                     # mine ore and replace with dirt
-                # mine away
+                # move away
             # elif mine
                 # mine away (-1)
                 # if tile_away contains no dirt or ore
@@ -402,6 +391,10 @@ class AI(BaseAI):
                 else:
                     if tile_back() is not None:
                         miner.move(tile_back())
+            # elif cargo not full and no block away -> move away
+            elif self.current_cargo(miner) < miner.current_upgrade.cargo_capacity and is_tile_empty(tile_away()):
+                if tile_away() is not None:
+                    miner.move(tile_away())
 
 
                
@@ -430,6 +423,10 @@ def dump_all(miner, chute):
     miner.dump(chute, 'dirt', -1)
     miner.dump(chute, 'ore', -1)
     miner.dump(chute, 'bomb', -1)
+
+def is_tile_empty(tile_to_check):
+    # check if the tile is empty
+    return tile_to_check.dirt == 0 and tile_to_check.ore == 0
 
 
 
