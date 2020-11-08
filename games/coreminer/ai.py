@@ -368,7 +368,9 @@ class AI(BaseAI):
                     return True
                 if material_left(miner.tile.tile_south):
                     miner.mine(miner.tile.tile_south, -1)
-                if material_left(miner.tile.tile_south):
+                if miner.tile.tile_south is None:
+                    return False
+                elif material_left(miner.tile.tile_south):
                     return False
                 else:
                     miner.move(miner.tile.tile_south)
@@ -542,7 +544,7 @@ class AI(BaseAI):
             # dump all cargo
             dump_all(miner, miner.tile)
             # buy meterials until you have 3x required amount
-            while miner.building_materials < ((2+miner.upgrade_level)*self.game.support_cost):
+            while miner.building_materials < ((3+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
             self.update_job_map(miner, 'Ore_miner', 'return_for_upgrade')
             return True
@@ -551,7 +553,7 @@ class AI(BaseAI):
             # dump all cargo
             dump_all(miner, tile_back())
             # buy materials until you have 3x required amount
-            while miner.building_materials < ((2+miner.upgrade_level)*self.game.support_cost):
+            while miner.building_materials < ((3+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
             self.update_job_map(miner, 'Ore_miner', 'return_for_upgrade')
             return True
@@ -712,7 +714,6 @@ class AI(BaseAI):
         # tile is the tile to see if it will fall
         if is_tile_empty(tile):
             return True
-        
         # consider y-1
         tiles = [self.game.get_tile_at(x, tile.y+1) for x in [tile.x-1, tile.x, tile.x+1]]
         tiles = [t for t in tiles if t is not None]
@@ -725,7 +726,10 @@ class AI(BaseAI):
         # return true if miner can move, otherwise false
         if tile.is_ladder:
             return True
-        if not is_tile_empty(self.game.get_tile_at(tile.x, tile.y+1)):
+        tile_to_check = self.game.get_tile_at(tile.x, tile.y+1)
+        if tile_to_check is None:
+            return True # You are on the bottom of the map
+        if not is_tile_empty(tile_to_check):
             return True
         return False
     
@@ -790,6 +794,8 @@ def row_generator(start=17, stride=2):
         curr = start - stride*stride_idx
         yield curr
         stride_idx += 1
+        curr = start + stride*stride_idx
+
 
 
     # <<-- /Creer-Merge: functions -->>
