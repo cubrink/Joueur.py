@@ -114,7 +114,7 @@ class AI(BaseAI):
         # Put your game logic here for runTurn
 
         if self.initial_turn:
-            for job_row in [15]:
+            for job_row in [15, 25]:
                 self.add_miner(job='Shaft_miner', state='mining', details={'job_row': job_row})
             self.initial_turn = False
 
@@ -128,8 +128,8 @@ class AI(BaseAI):
         #     self.update_job_map(miner, 'Shaft_miner', 'mining', details=details)
         #     print(f'New miner id = {new_miner_id}')
 
-        # if len(self.player.miners) == 2 and self.player.money >= self.game.spawn_price * 3:
-        #     self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 10})
+        if len(self.player.miners) == 2 and self.player.money >= self.game.spawn_price * 2:
+            self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 10})
 
 
         print("Current turn: ", self.game.current_turn)
