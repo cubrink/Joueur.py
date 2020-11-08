@@ -416,7 +416,7 @@ class AI(BaseAI):
             # buy meterials until you have 3x required amount
             while miner.building_materials < ((3+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
-            self.job_map[id(miner)] = ('Ore_mining', 'return_to_mining')
+            self.job_map[id(miner)] = ('Ore_miner', 'return_to_mining')
             return True
         # move back until miner can drop cargo
         elif tile_back().is_hopper:
@@ -425,7 +425,7 @@ class AI(BaseAI):
             # buy materials until you have 3x required amount
             while miner.building_materials < ((3+miner.upgrade_level)*self.game.support_cost):
                 miner.buy('buildingMaterials', self.game.support_cost)
-            self.job_map[id(miner)] = ('Ore_mining', 'return_to_mining')
+            self.job_map[id(miner)] = ('Ore_miner', 'return_to_mining')
             return True
         else:
             if tile_back() is not None:
@@ -441,7 +441,7 @@ class AI(BaseAI):
         tile_back = lambda: getattr(miner.tile, self.back)
 
         if tile_away() is not None and not is_tile_empty(tile_away()):
-            self.job_map[id(miner)] = ('Ore_mining', 'mining')
+            self.job_map[id(miner)] = ('Ore_miner', 'mining')
             return True
         
         if tile_away() is not None:
@@ -467,13 +467,13 @@ class AI(BaseAI):
         # if cargo full
         if self.current_cargo(miner) == miner.current_upgrade.cargo_capacity:
             # go to state "return to cargo"
-            self.job_map[id(miner)] = ('Ore_mining', 'return_to_cargo')
+            self.job_map[id(miner)] = ('Ore_miner', 'return_to_cargo')
             return True
 
         # if no tile away
         if tile_away() is not None and is_tile_empty(tile_away()):
             # go to state "return to mining"
-            self.job_map[id(miner)] = ('Ore_mining', 'return_to_mining')
+            self.job_map[id(miner)] = ('Ore_miner', 'return_to_mining')
             return True
 
         if not is_tile_empty(tile_away()):
