@@ -81,7 +81,7 @@ class AI(BaseAI):
                             'start_chaos': self.start_chaos
                             'return_cargo_chaos': self.return_cargo_chaos,
                             'return_to_mining_chaos': self.return_to_mining_chaos,
-                            'mining_chaos': self.ore_mining_chaos,
+                            'mining_chaos': self.mining_chaos,
                             'return_for_upgrade_chaos': self.return_for_upgrade
                           },
             'Military_defence': {'standby': self.standby},
@@ -571,6 +571,8 @@ class AI(BaseAI):
         if id(miner) not in self.update_set:
             if self.job_map[id(miner)][0] == 'Ore_miner':
                 self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
+            elif self.job_map[id(miner)][0] == 'Chaos_mode':
+                self.update_job_map(miner, 'Chaos_mode', 'return_to_mining_chaos')
             return True
 
         print("returning for upgrades")
@@ -589,6 +591,8 @@ class AI(BaseAI):
                 self.update_set.discard(id(miner))
                 if self.job_map[id(miner)][0] == 'Ore_miner':
                     self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
+                elif self.job_map[id(miner)][0] == 'Chaos_mode':
+                    self.update_job_map(miner, 'Chaos_mode', 'return_to_mining_chaos')
                 return True
 
             # the tile back is the hopper
@@ -598,6 +602,8 @@ class AI(BaseAI):
                 self.update_set.discard(id(miner))
                 if self.job_map[id(miner)][0] == 'Ore_miner':
                     self.update_job_map(miner, 'Ore_miner', 'return_to_mining')
+                elif self.job_map[id(miner)][0] == 'Chaos_mode':
+                    self.update_job_map(miner, 'Chaos_mode', 'return_to_mining_chaos')
                 return True
             # move back to find hopper
             else:
@@ -606,6 +612,8 @@ class AI(BaseAI):
                     miner.move(tile_back())
                 else:
                     self.update_set.discard(id(miner))
+                    if self.job_map[id(miner)][0] == 'Chaos_mode':
+                        self.update_job_map(miner, 'Chaos_mode', 'return_to_mining_chaos')
                     self.update_job_map(miner, self.job_map[id(miner)][0], 'emergency_return')
                     return True
         
@@ -644,7 +652,7 @@ class AI(BaseAI):
                             'start_chaos': self.start_chaos
                             'return_cargo_chaos': self.return_cargo_chaos,
                             'return_to_mining_chaos': self.return_to_mining_chaos,
-                            'mining_chaos': self.ore_mining_chaos,
+                            'mining_chaos': self.mining_chaos,
                             'return_for_upgrade_chaos': self.return_for_upgrade
 
 
@@ -693,13 +701,37 @@ class AI(BaseAI):
             
 
 
+    def return_cargo_chaos(self, miner):
+        # return miner to cargo - moving back to cargo
+        tile_away = lambda: getattr(miner.tile, self.away)
+        tile_back = lambda: getattr(miner.tile, self.back)
+
+        # check if miner is on hopper
+        if miner.tile.is_hopper:
+            # dump all cargo
+            dump_all(miner, miner.tile)
+            self.update_job_map(miner, 'Chaos_mode', 'return_for_upgrade')
+            return True
+        # the tile back is the hopper
+        elif tile_back().is_hopper:
+            # dump all cargo
+            dump_all(miner, tile_back())
+            self.update_job_map(miner, 'Chaos_mode', 'return_for_upgrade')
+            return True
+        # move back to find hopper
+        else:
+            if tile_back() is not None:
+                miner.move(tile_back())
+        
+        return False
 
 
+    def return_to_mining_chaos(self, miner):
+        pass
 
 
-
-
-
+    def mining_chaos(self, miner):
+        pass
 
 
 
