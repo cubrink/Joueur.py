@@ -126,39 +126,19 @@ class AI(BaseAI):
             for job_row in [21, 15]:
                 self.add_miner(job='Shaft_miner', state='mining', details={'job_row': job_row, 'mega': False})
             self.initial_turn = False
-
-        # # If we have no miners and can afford one, spawn one
-        # if len(self.player.miners) < 1 and self.player.money >= self.game.spawn_price:
-        #     prev = set((id(miner) for miner in self.player.miners))
-        #     self.player.spawn_miner()
-        #     new_miner_id = set((id(miner) for miner in self.player.miners)).difference(prev).pop()
-        #     miner = [m for m in self.player.miners if id(m) == new_miner_id][0]
-        #     details = {'job_row': 25}
-        #     self.update_job_map(miner, 'Shaft_miner', 'mining', details=details)
-        #     print(f'New miner id = {new_miner_id}')
-
-        # if len(self.player.miner) == 2 and self.player.money >= self.game.spawn_price * 3:
-        #     self.add_miner(job='Shaft_miner', state='mining', details={'job_row': 10, 'mega': False})
-
         self.miner_needed()
-
-
-        print("Current turn: ", self.game.current_turn)
 
         for miner in self.player.miners:
             if not miner or not miner.tile:
                 continue
             job, state, _ = self.job_map[id(miner)]
-            print(id(miner), job, state)
             self.consider_upgrade(miner)
             action = self.state_map[job][state]
             while action(miner):
                 job, state, _ = self.job_map[id(miner)]
                 action = self.state_map[job][state]
-         
-            print("(x, y) = ", miner.tile.x, miner.tile.y)
-            print("(dirt, ore) = ", miner.dirt, miner.ore)
 
+        print("Current turn: ", self.game.current_turn)
         return True
         # <<-- /Creer-Merge: runTurn -->>
 
@@ -256,9 +236,7 @@ class AI(BaseAI):
             if self.player.money >= self.game.upgrade_price * 2:
                 self.update_set.add(id(miner))
                 return True
-                # if miner.tile.is_hopper:
-                #     if miner.upgrade():
-                #         print('Miner Powered Up!')
+
 
     
 
@@ -490,15 +468,6 @@ class AI(BaseAI):
 
         # move vertical up the ladder until the desired row is met
         while miner.tile.y < self.job_map[id(miner)][-1]['job_row']:
-            print("##########################################################################")
-            print("##########################################################################")
-            print()
-            print('on the wrong row. supposed to be on', self.job_map[id(miner)][-1]['job_row'],
-                  'but on', miner.tile.y)
-            print()
-            print("##########################################################################")
-            print("##########################################################################")
-
             if miner.tile.tile_north is not None and is_tile_empty(miner.tile.tile_north):
                 if not miner.tile.tile_north.is_ladder:
                     if tile_back() is not None and tile_back().is_hopper:
@@ -522,7 +491,6 @@ class AI(BaseAI):
 
 
     def ore_mining(self, miner):
-        print("In ore mining, materials: ", miner.building_materials)
         # mine away if possible
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
