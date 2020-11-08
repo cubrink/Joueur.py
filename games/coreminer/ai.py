@@ -78,7 +78,7 @@ class AI(BaseAI):
                                 'bombing_run': self.bombing_run
                                 },
             'Chaos_mode':{
-                            'start_chaos': self.start_chaos
+                            'start_chaos': self.start_chaos,
                             'return_cargo_chaos': self.return_cargo_chaos,
                             'return_to_mining_chaos': self.return_to_mining_chaos,
                             'mining_chaos': self.mining_chaos,
@@ -718,13 +718,13 @@ class AI(BaseAI):
         if miner.tile.is_hopper:
             # dump all cargo
             dump_all(miner, miner.tile)
-            self.update_job_map(miner, 'Chaos_mode', 'return_for_upgrade')
+            self.update_job_map(miner, 'Chaos_mode', 'return_for_upgrade_chaos')
             return True
         # the tile back is the hopper
         elif tile_back().is_hopper:
             # dump all cargo
             dump_all(miner, tile_back())
-            self.update_job_map(miner, 'Chaos_mode', 'return_for_upgrade')
+            self.update_job_map(miner, 'Chaos_mode', 'return_for_upgrade_chaos')
             return True
         # move back to find hopper
         else:
@@ -755,7 +755,7 @@ class AI(BaseAI):
         tile_back = lambda: getattr(miner.tile, self.back)
 
         # while is_empty(tile_away()) and miner.moves
-        while tile_away() is not None and is_tile_empty(tile_away()) and miner.moves
+        while tile_away() is not None and is_tile_empty(tile_away()) and miner.moves:
             # move away
             miner.move(tile_away())
         # if miner.mining_power
@@ -766,7 +766,7 @@ class AI(BaseAI):
                 # change state to return_cargo_chaos
                 self.update_job_map(miner, 'Chaos_mode', 'return_cargo_chaos')
                 # check if column is colapsing
- -----          if self.is_collapsing():
+                if self.is_collapsing(miner.tile.x):
                     # if falling -> self.protect_miners()
                     self.protect_miners()
                 return True
@@ -777,27 +777,6 @@ class AI(BaseAI):
         # 
 
         return False
-
-
-
-
-    def protect_miners(self):
-        # call when a column is colapsing
-        pass
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -883,7 +862,7 @@ class AI(BaseAI):
             if is_tile_empty(tile):
                 continue
             elif not tile.is_falling:
-                return False.
+                return False
             if tile.is_falling:
                 return True
         return False
