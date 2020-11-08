@@ -331,84 +331,13 @@ class AI(BaseAI):
 
 
 
-    # TODO: add break condition when tile is None
+    # TODO: add break condition when tile is None somewhere in ore mining job
     # TODO: when moving away or back, check for ladder
-    # def mine_row(self, miner):
-
-    #     """
-    #     Mining
-    #     Return cargo
-    #     return to mining
-
-    #     """
-
-
-
-
-    #     tile_away = lambda: getattr(miner.tile, self.away)
-    #     tile_back = lambda: getattr(miner.tile, self.back)
-        
-    #     # Not standing on hopper
-    #     if tile_back() is not None and tile_back().is_hopper and not miner.tile.is_ladder:
-    #         miner.buy('buildingMaterials', self.game.support_cost)
-    #         miner.build(miner.tile, 'ladder')
-        
-    #     # Standing on hopper
-    #     if miner.tile.is_hopper:
-    #         if not is_tile_empty(tile_away()):
-    #             miner.mine(tile_away(), -1)
-    #         if is_tile_empty(tile_away()):
-    #             miner.buy('buildingMaterials', self.game.support_cost)
-    #             miner.build(miner.tile, 'ladder')
-
-
-    #     # while miner can move or mine
-    #     while miner.moves != 0 and miner.mining_power != 0:
-    #         # if cargo is full or not enough material for support
-    #         if self.current_cargo(miner) == miner.current_upgrade.cargo_capacity or miner.building_materials < self.game.support_cost:
-    #             # check if miner is on hopper
-    #             if miner.tile.is_hopper:
-    #                 # dump all cargo
-    #                 dump_all(miner, miner.tile)
-    #                 # buy meterials until you have 2x required amount
-    #                 while miner.building_materials < (2*self.game.support_cost):
-    #                     miner.buy('buildingMaterials', self.game.support_cost)
-    #             # move back until miner can drop cargo
-    #             elif tile_back().is_hopper:
-    #                 # dump all cargo
-    #                 dump_all(miner, tile_back())
-    #                 # buy materials until you have 2x required amount
-    #                 while miner.building_materials < ((3+miner.upgrade_level)*self.game.support_cost):
-    #                     miner.buy('buildingMaterials', self.game.support_cost)
-    #             else:
-    #                 if tile_back() is not None:
-    #                     miner.move(tile_back())
-    #         # elif cargo not full and no block away -> move away
-    #         elif self.current_cargo(miner) < miner.current_upgrade.cargo_capacity and is_tile_empty(tile_away()):
-    #             if tile_away() is not None:
-    #                 miner.move(tile_away())
-    #             # if above or below is ore and miner can place dirt
-    #             if miner.tile.tile_north is not None:
-    #                 if miner.tile.tile_north.ore != 0:
-    #                     # mine ore and replace with dirt
-    #                     miner.mine(miner.tile.tile_north, -1)
-    #                 if is_tile_empty(miner.tile.tile_north):
-    #                     miner.dump(miner.tile.tile_north, 'dirt', 1)
-    #         # elif mine
-    #         # if tile_away contains no dirt or ore
-    #         elif not is_tile_empty(tile_away()):
-    #             miner.mine(tile_away(), -1)
-    #             # check if support needs to be placed
-    #             tile = self.game.get_tile_at(tile_away().x, tile_away().y-1)
-    #             if not self.is_supported(tile) and miner.building_materials > self.game.support_cost:
-    #                 miner.build(tile_away(), 'support')
-        
-    #     # return cargo
-
-
 
 
     def return_cargo(self, miner):
+        # TODO: make sure you can walk forward - place ladder or dirt as needed
+
         # return miner to cargo - moving back to cargo
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
@@ -438,11 +367,14 @@ class AI(BaseAI):
         return False
         
 
-
     def return_to_mining(self, miner):
+        # TODO: make sure you can walk forward - place ladder or dirt as needed
+
         # return miner to mining - moving away as far as possible
         tile_away = lambda: getattr(miner.tile, self.away)
         tile_back = lambda: getattr(miner.tile, self.back)
+
+        
 
         if tile_away() is not None and not is_tile_empty(tile_away()):
             self.job_map[id(miner)] = ('Ore_miner', 'mining')
