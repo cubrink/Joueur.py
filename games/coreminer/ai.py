@@ -697,6 +697,7 @@ class AI(BaseAI):
         while miner.moves > 0 and miner.mining_power > 0:
             if miner.tile.x in [0, 29] and miner.tile.y == 0:
                 miner.move(tile_away())
+                miner.move(miner.tile.tile_south())
             if miner.tile.is_hopper:
                 print("Condition 1")
                 miner.move(tile_away())
