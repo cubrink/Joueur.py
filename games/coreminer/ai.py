@@ -108,6 +108,10 @@ class AI(BaseAI):
 
         # <<-- Creer-Merge: end -->> - Code you add between this comment and the end comment will be preserved between Creer re-runs.
         # replace with your end logic
+
+        for row_idx in range(30):
+            print(f"Row {row_idx} depth: ", self.get_row_depth(row_idx))
+
         print("Final value: ", self.player.value)
         print("Final money: ", self.player.money)
         # <<-- /Creer-Merge: end -->>
@@ -686,6 +690,24 @@ class AI(BaseAI):
         self.update_job_map(miner, job, state, details=details)
         print(f'New miner id = {new_miner_id}')
         return miner
+
+    def get_row_depth(self, row_idx):
+        # We define the depth as the distance from the hopper
+        if self.back == 'tile_west':
+            x = 0
+        else:
+            x = 29
+        tile = self.game.get_tile_at(x, row_idx)
+        tile = getattr(tile, self.away)
+        depth = 0
+        while is_tile_empty(tile):
+            depth += 1
+            tile = getattr(tile, self.away)
+            if tile is None:
+                break
+        return depth
+
+        
 
 
 
