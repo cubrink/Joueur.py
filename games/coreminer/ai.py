@@ -571,17 +571,14 @@ class AI(BaseAI):
                     if not miner.dump(tile_away(), 'ore', 1):
                         break
             if miner.bombs + miner.dirt + miner.ore > material_needed_to_remove:
-                # if miner still has mining power left
-                if miner.mining_power:
+                # if miner has no items and still can't carry all
+                while miner.mining_power and not is_tile_empty(tile_back()):
                     if miner.mine(tile_back(), -1):
                         miner.dump(tile_away(), 'dirt', -1)
                         miner.dump(tile_away(), 'ore', -1)
-                    
-
-            
-            # try moving forward again
-            pass
-        miner.move(tile_back())
+        
+        if is_tile_empty(tile_back()):
+            miner.move(tile_back())
 
         # check if next tile back is the chute
         if tile_back().is_hopper:
