@@ -173,23 +173,6 @@ class Tile(GameObject):
         # <<-- /Creer-Merge: is_pathable_builtin -->>
 
 
-    # def needs_ladder(self) -> bool:
-    #     """Checks if a Tile is pathable to units
-
-    #     Returns:
-    #         bool: True if pathable, False otherwise.
-    #     """
-    #     return self.tile_south.ore + self.tile_south.dirt <= 0
-
-    # def can_build_ladder(self, max_) -> bool:
-    #     """Checks if a Tile is pathable to units
-
-    #     Returns:
-    #         bool: True if pathable, False otherwise.
-    #     """
-    #     return self.ore + self.dirt <= 0
-
-
     def has_neighbor(self, tile: 'games.coreminer.tile.Tile') -> bool:
         """Checks if this Tile has a specific neighboring Tile.
 

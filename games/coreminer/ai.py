@@ -836,6 +836,32 @@ class AI(BaseAI):
                 break
         return depth
 
+
+    def is_collapsing(self, col_idx):
+        if self.game.get_tile_at(col_idx, 29).is_support:
+            return False
+        tiles = [self.game.get_tile_at(col_idx, y) for y in reversed(range(30))]
+        for tile in tiles:
+            if is_tile_empty(tile):
+                continue
+            elif not tile.is_falling:
+                return False.
+            if tile.is_falling:
+                return True
+        return False
+
+
+    def protect_miners(self):
+        dangerous_columns = [idx for idx in range(30) if self.is_collapsing(idx)]
+        for col in dangerous_columns:
+            miners = [m for m in self.player.miners if m.x == col and m.y == 29]
+            for miner in miners:
+                tile_away = lambda: getattr(miner.tile, self.away)
+                tile_back = lambda: getattr(miner.tile, self.back)
+                if tile_back() is not None:
+                    miner.move(tile_back())
+                
+
         
 
 
