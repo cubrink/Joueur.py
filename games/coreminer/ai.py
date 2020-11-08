@@ -247,32 +247,149 @@ class AI(BaseAI):
 
 
     def shaft_mining(self, miner):
-        print(self.away, self.back)
-        print("base x", self.player.base_tile.x)
-
-        tile_away = getattr(miner.tile, self.away)
-        tile_back = getattr(miner.tile, self.back)
+        print("Start shaft mining")
+        print("base x:", self.player.base_tile.x)
+        tile_away = lambda: getattr(miner.tile, self.away)
+        tile_back = lambda: getattr(miner.tile, self.back)
 
         if (miner.tile.is_hopper):
-            print("at hopper")
+            print("at hopper 1")
             miner.dump(miner.tile, 'ore', -1)
             miner.dump(miner.tile, 'dirt',-1)
             miner.buy('buildingMaterials', 10)
             miner.build(tile_away(), 'ladder')
         elif (tile_back() is not None and tile_back().is_hopper()):
-            print("at hopper")
+            print("at hopper 2")
             miner.dump(tile_back(), 'ore', -1)
             miner.dump(tile_back(), 'dirt',-1)
             miner.buy('buildingMaterials', 10)
             miner.build(miner.tile, 'ladder')
 
+        while miner.mining_power > 0:
+            # If miner.tile.x != self.player.base_tile.x:
+            #       mine back
+            if (tile_away().dirt + tile_away().ore > 0):
+                pass
+
 
         print(f'type of tile_away = {type(tile_away())}')
-        
-        miner.move(tile_away())
+
         miner.mine(miner.tile.tile_south, -1)
-        miner.mine(tile_back(), -1)
-        miner.move(tile_back())
+        miner.move(miner.tile.tile_south)
+        miner.mine(tile_away(), -1)
+
+        # print("1")
+        # miner.move(tile_away())
+        # print("2")
+        # miner.mine(miner.tile.tile_south, -1)
+        # print("3")
+        # miner.mine(tile_back(), -1)
+        # print("4")
+        # miner.move(tile_back())
 
         return
+    
+
+
+    # TODO
+    def  mass_mining(self, miner):
+        # mine all the top layers of the map
+        
+        tile_away = lambda: getattr(miner.tile, self.away)
+        tile_back = lambda: getattr(miner.tile, self.back)
+
+        # initial routine
+        if miner.tile.y == 0 and (miner.tile.x in [0, 29]):
+            miner.move(tile_away())
+
+            while miner.moves != 0:
+                if miner.tile.y < 2:
+                    # check for ladder
+                    if miner.tile.tile_south is not None:
+                        if miner.tile.tile_south.is_ladder():
+                            miner.move(miner.tile.tile_south)
+                if miner.tile.y == 2:
+                    # check for safety barrier
+
+                    if tile_away().shielding != 0:            # safety barrier set
+                        if miner.tile.tile_south is not None:
+                            miner.move(miner.tile.tile_south)
+                    else:
+                        #start mining the top 2 rows
+                        self.mine_top_2_rows(miner)
+                if miner.tile.y > 2:
+                    if miner.tile.tile_south is not None:
+                        miner.move(miner.tile.tile_south)
+
+        
+
+    def mine_top_2_rows(self, miner):
+        # mine the top 2 rows of the map
+        # position for the start of this function should be (1,2) or (28,2)
+        pass
+
+    def mine_row(self, miner):
+        tile_away = lambda: getattr(miner.tile, self.away)
+        tile_back = lambda: getattr(miner.tile, self.back)
+
+        # additional case: what to do when the miner doesn't have enough material
+        #                  to place a support
+        # while miner can move or mine
+            # if cargo is full or not enough material for support
+                # move back until miner can drop cargo
+                    # drop cargo
+                    # buy materials for supports
+            # elif cargo not full and no block away -> move away
+                # if above or below is ore and miner can place dirt
+                    # mine ore and replace with dirt
+                # mine away
+            # elif mine
+                # mine away (-1)
+                # if tile_away contains no dirt or ore
+                    # check if support needs to be placed
+        
+        # while miner can move or mine
+        while miner.moves != 0 and miner.mining != 0:
+            # if cargo is full or not enough material for support
+            if self.current_cargo(miner) == miner.current_upgrade.cargo_capacity or miner.building_materials < self.game.support_cost:
+                # move back until miner can drop cargo
+                if tile_away().is_hopper:
+                    # dump all cargo
+                    dump_all(miner, tile_back())
+                    # buy materials until you have 2x required amount
+                    while miner.building_materials < (2*self.game.support_cost):
+                        miner.buy('buildingMaterials', self.game.support_cost)
+                else:
+                    if tile_back() is not None:
+                        miner.move(tile_back())
+
+
+               
+            
+
+
+
+
+
+
+
+
+    def current_cargo(self, miner):
+        return miner.dirt + miner.ore + miner.buildingMaterials + (miner.bombs * self.game.bombSize)
+        
+
+
+
+
+
+def miner_max_cargo(miner):
+    return miner.upgrade_level
+
+def dump_all(miner, chute):
+    # dump all cargo
+    miner.dump(chute, 'dirt', -1)
+    miner.dump(chute, 'ore', -1)
+    miner.dump(chute, 'bomb', -1)
+
+
 
