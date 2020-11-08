@@ -54,7 +54,7 @@ class AI(BaseAI):
                             'return_cargo': self.return_cargo, 
                             'return_to_mining': self.return_to_mining, 
                             'mining': self.ore_mining,
-                            'emergency_return': self.emercency_return
+                            'emergency_return': self.emergency_return
                           },
             'Mass_miner': {
                             'return_cargo': self.standby, 
@@ -129,6 +129,7 @@ class AI(BaseAI):
             job, state, _ = self.job_map[id(miner)]
             print(id(miner), job, state)
             action = self.state_map[job][state]
+            self.consider_upgrade(miner)
             while action(miner):
                 job, state, _ = self.job_map[id(miner)]
                 action = self.state_map[job][state]
@@ -209,9 +210,36 @@ class AI(BaseAI):
 
 
 
+    def consider_upgrade(self, miner):
+        job, state, details = self.job_map[id(miner)]
+        desired_lvl = 0
+
+        if job == "Ore_miner":
+            if details["job_row"] < 20:
+                desired_lvl = 1
+            else:
+                desired_lvl = 2
+        elif job == "Mass_miner":
+            desired_lvl = 1
+        elif job == "Shaft_miner":
+            desired_lvl = 0
+        elif job == "Military":
+            desired_lvl = 3
+        else:
+            return
+
+        if desired_lvl > miner.upgrade_level:
+            # check bank to consider upgrading
+            if self.player.money >= self.game.upgrade_price * 3:
+                if miner.upgrade():
+                    print('Miner Powered Up!')
+    
 
 
-
+    def add_miner(self):
+        # add miner if desired
+        pass
+        
 
 
 
